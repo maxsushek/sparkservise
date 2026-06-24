@@ -669,7 +669,7 @@
     Object.keys(t.prices).forEach(function(k){
       var p=t.prices[k];
       var time=k.indexOf('воды')>-1?'от 2ч':k.indexOf('плат')>-1?'1-3 дня':t.time;
-      html+='<tr><td class="svc-name">'+k+'</td><td class="pr">от '+p[0].toLocaleString('ru-RU')+' — '+p[1].toLocaleString('ru-RU')+' ₴</td><td class="time">'+time+'</td></tr>';
+      html+='<tr><td class="svc-name">'+k+'</td><td class="pr">'+p[0].toLocaleString('ru-RU')+' — '+p[1].toLocaleString('ru-RU')+' ₴</td><td class="time">'+time+'</td></tr>';
     });
     bodyEl.innerHTML=html;
   }
