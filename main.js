@@ -50,7 +50,7 @@
     /* ---- Price calculator (demo data, no backend) ---- */
     var DATA={
       iphone:{label:"iPhone",
-        models:["iPhone 16 Pro Max","iPhone 16 Pro","iPhone 16","iPhone 15 Pro Max","iPhone 15 Pro","iPhone 15","iPhone 14 Pro","iPhone 14","iPhone 13","iPhone 12","iPhone 11","iPhone SE"],
+        models:["iPhone 17 Pro Max","iPhone 17 Pro","iPhone 17 Air","iPhone 17","iPhone 16 Pro Max","iPhone 16 Pro","iPhone 16","iPhone 15 Pro Max","iPhone 15 Pro","iPhone 15","iPhone 14 Pro","iPhone 14","iPhone 13","iPhone 12","iPhone 11","iPhone SE"],
         problems:{"Замена экрана (дисплея)":[1200,7500],"Замена аккумулятора":[850,2400],"Замена стекла":[900,3800],"Не заряжается (разъём)":[750,1900],"После воды":[700,4500],"Замена камеры":[800,3200],"Динамик / микрофон":[700,2200],"Face ID":[1500,4500]}},
       macbook:{label:"MacBook",
         models:["MacBook Pro 14/16 (M-series)","MacBook Pro 13","MacBook Air (M-series)","MacBook Air 13","MacBook Pro Retina","MacBook Air (старый)"],
@@ -66,8 +66,8 @@
         problems:{"Чистка":[400,900],"Не заряжаются":[500,1500],"Замена амбушюр / сетки":[400,1200],"Диагностика звука":[300,800]}}
     };
     function tierMult(model){
-      if(/Ultra|16 Pro Max|16 Pro|Pro 14\/16|Pro Max/.test(model)) return 1.5;
-      if(/16|15 Pro|15|Series 9|Pro 11|Pro 12\.9|Air \(M|AirPods Pro 2|Max/.test(model)) return 1.2;
+      if(/Ultra|17 Pro|16 Pro Max|16 Pro|Pro 14\/16|Pro Max/.test(model)) return 1.5;
+      if(/iPhone 17|16|15 Pro|15|Series 9|Pro 11|Pro 12\.9|Air \(M|AirPods Pro 2|Max/.test(model)) return 1.2;
       if(/14|13|Series 8|Series 7|Air|iPad\b|AirPods 3|AirPods Pro\b/.test(model)) return 0.95;
       return 0.7;
     }
