@@ -598,7 +598,7 @@ TEMPLATE = r'''<!DOCTYPE html>
         </ul>
       </div>
       <div class="foot reveal">
-        <h3>Услуги</h3>
+        <h3>Компания</h3>
         <ul>
           <li><a href="../../razblokirovka-icloud/">Разблокировка iCloud</a></li>
           <li><a href="../../razblokirovka-iphone/">Разблокировка iPhone</a></li>
@@ -606,6 +606,7 @@ TEMPLATE = r'''<!DOCTYPE html>
           <li><a href="../../vosstanovlenie-dannyh/">Восстановление данных</a></li>
           <li><a href="../../blog/">Блог</a></li>
           <li><a href="../../o-kompanii/">О компании</a></li>
+          <li><a href="../../kontakty/">Контакты</a></li>
         </ul>
       </div>
       <div class="foot reveal">
