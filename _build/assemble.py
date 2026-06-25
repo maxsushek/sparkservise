@@ -1,0 +1,641 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Детерминированная сборка страниц ремонта устройств из _build/<slug>.json.
+Каркас (шапка/футер/форма/модалка/пути) фиксирован -> дизайн идентичен на всех страницах."""
+import json, html, os, sys
+
+REPO = "/Users/koristuvac/Downloads/sparkservise-git"
+BUILD = os.path.join(REPO, "_build")
+
+DEVICES = [
+    ("remont-macbook", "MacBook"),
+    ("remont-imac", "iMac"),
+    ("remont-ipad", "iPad"),
+    ("remont-apple-watch", "Apple Watch"),
+    ("remont-airpods", "AirPods"),
+]
+ALL_REPAIR = [
+    ("remont-iphone", "iPhone"), ("remont-macbook", "MacBook"), ("remont-imac", "iMac"),
+    ("remont-ipad", "iPad"), ("remont-apple-watch", "Apple Watch"), ("remont-airpods", "AirPods"),
+]
+
+# inner SVG (viewBox 0 0 24 24, stroke=currentColor width=2), wrapped at render time
+ICONS = {
+ "screen": '<rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/>',
+ "battery": '<rect x="3" y="8" width="16" height="8" rx="2"/><path d="M21 11v2"/>',
+ "water": '<path d="M12 3s6 7 6 11a6 6 0 11-12 0c0-4 6-11 6-11z"/>',
+ "board": '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 4v3M15 4v3M9 17v3M15 17v3M4 9h3M4 15h3M17 9h3M17 15h3"/>',
+ "charging": '<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>',
+ "camera": '<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>',
+ "speaker": '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.08"/>',
+ "mic": '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>',
+ "button": '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>',
+ "keyboard": '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12"/>',
+ "trackpad": '<rect x="4" y="4" width="16" height="14" rx="2"/><path d="M12 13v3"/>',
+ "ssd": '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h4M7 14h2"/><circle cx="17" cy="12" r="1"/>',
+ "glass": '<rect x="5" y="2" width="14" height="20" rx="3"/><path d="M8 6l8 12"/>',
+ "hinge": '<path d="M4 6h16v9H4z"/><path d="M2 19h20l-1-2H3z"/>',
+ "fan": '<circle cx="12" cy="12" r="2"/><path d="M12 10c0-4 1-7 2-7s2 2 1 5M14 12c4 0 7 1 7 2s-2 2-5 1M12 14c0 4-1 7-2 7s-2-2-1-5M10 12c-4 0-7-1-7-2s2-2 5-1"/>',
+ "cleaning": '<path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9z"/><path d="M19 14l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>',
+ "crown": '<circle cx="12" cy="12" r="7"/><path d="M19 10v4"/>',
+ "case": '<rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 3v4h6V3"/>',
+ "wrench": '<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>',
+}
+
+def esc(s):  # body text
+    return html.escape(str(s), quote=False)
+def escA(s):  # attribute
+    return html.escape(str(s), quote=True)
+def icon(key):
+    inner = ICONS.get(str(key).strip().lower(), ICONS["wrench"])
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' + inner + '</svg>'
+def normprice(s):  # убрать избыточное «от» перед диапазоном: «от A — B ₴» -> «A — B ₴»
+    s = str(s).strip()
+    if ("—" in s or "–" in s) and s.startswith("от"):
+        s = s[2:].lstrip()
+    return s
+
+NAV = '''<div class="topbar">
+  <div class="wrap">
+    <span class="tb-item tb-hide"><span class="dot"></span> Сегодня работаем · 10:00-19:00</span>
+    <span class="right">
+      <span class="lang"><a href="https://sparkservice.od.ua/">UA</a><span>/</span><a class="on" href="#">RU</a></span>
+    </span>
+  </div>
+</div>
+
+<header class="site" id="hdr">
+  <div class="wrap nav">
+    <a class="brand" href="../" aria-label="SPARK - сервисный центр Apple в Одессе"><img src="../logo.png" alt="SPARK - ремонт и сервис техники Apple в Одессе" width="320" height="164" style="height:36px;width:auto"></a>
+    <nav class="nav-links" aria-label="Основная навигация">
+      <span class="has-drop">
+        <a href="../remont-iphone/" role="button" aria-haspopup="true">Ремонт</a>
+        <span class="drop" role="menu">
+          <a href="../remont-iphone/"><svg class="di" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="2" width="10" height="20" rx="2.5"/></svg> Ремонт iPhone</a>
+          <a href="../remont-macbook/"><svg class="di" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M2 19h20l-1.5-2H3.5z"/></svg> Ремонт MacBook</a>
+          <a href="../remont-imac/"><svg class="di" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="13" rx="1.5"/><path d="M9 20h6"/></svg> Ремонт iMac</a>
+          <a href="../remont-ipad/"><svg class="di" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="3" width="14" height="18" rx="2"/></svg> Ремонт iPad</a>
+          <a href="../remont-apple-watch/"><svg class="di" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="6" width="10" height="12" rx="3"/></svg> Ремонт Apple Watch</a>
+          <a href="../remont-airpods/"><svg class="di" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3v10M16 3v10"/></svg> Ремонт AirPods</a>
+        </span>
+      </span>
+      <span class="has-drop">
+        <a href="../razblokirovka-icloud/" role="button" aria-haspopup="true">Услуги</a>
+        <span class="drop" role="menu">
+          <a href="../razblokirovka-icloud/">Разблокировка iCloud</a>
+          <a href="../razblokirovka-iphone/">Разблокировка iPhone</a>
+          <a href="../diagnostika/">Диагностика</a>
+          <a href="../vosstanovlenie-dannyh/">Восстановление данных</a>
+        </span>
+      </span>
+      <a href="../#prices">Цены</a>
+      <a href="../blog/">Блог</a>
+      <a href="../kontakty/">Контакты</a>
+    </nav>
+    <div class="nav-right">
+      <span class="hphone"><a href="tel:+380960755452">+38 (096) 075-54-52</a><small>Пн-Сб 10:00-19:00</small></span>
+      <a class="btn btn-spark hcta" href="#book">Записаться</a>
+      <button class="burger" id="burger" aria-label="Меню" aria-expanded="false"><span></span></button>
+    </div>
+  </div>
+</header>
+<nav class="mnav" id="mnav" aria-label="Мобильное меню">
+  <p class="grp">Ремонт устройств</p>
+  <a href="../remont-iphone/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="2" width="10" height="20" rx="2.5"/><line x1="11" y1="18.5" x2="13" y2="18.5"/></svg></span> iPhone</a>
+  <a href="../remont-macbook/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M2 19h20l-1.5-2H3.5z"/></svg></span> MacBook</a>
+  <a href="../remont-imac/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="13" rx="1.5"/><path d="M9 20h6"/></svg></span> iMac</a>
+  <a href="../remont-ipad/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="3" width="14" height="18" rx="2"/></svg></span> iPad</a>
+  <a href="../remont-apple-watch/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9 6l1-3h4l1 3"/></svg></span> Apple Watch</a>
+  <a href="../remont-airpods/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3v10M8 13a3 3 0 11-3 3M16 3v10M16 13a3 3 0 103 3"/></svg></span> AirPods</a>
+  <p class="grp">Услуги</p>
+  <a href="../razblokirovka-icloud/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 18a4 4 0 010-8 5 5 0 019.6-1.3A3.5 3.5 0 0117.5 18z"/></svg></span> Разблокировка iCloud</a>
+  <a href="../razblokirovka-iphone/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></span> Разблокировка iPhone</a>
+  <a href="../diagnostika/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></span> Диагностика</a>
+  <a href="../vosstanovlenie-dannyh/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/></svg></span> Восстановление данных</a>
+  <p class="grp">Информация</p>
+  <a href="../#prices"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7v5l9 9 5-5-9-9H3z"/><circle cx="7" cy="11" r="1.3"/></svg></span> Цены и сроки</a>
+  <a href="../blog/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h9l3 3v15H6z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg></span> Блог</a>
+  <a href="../kontakty/"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3s6 7 6 11a6 6 0 11-12 0c0-4 6-11 6-11z"/><circle cx="12" cy="11" r="2"/></svg></span> Контакты</a>
+  <a class="cta" href="#book">Записаться</a>
+</nav>
+'''
+
+FOOTER = '''<footer class="site" id="footer">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot reveal">
+        <a class="brand" href="../"><img src="../logo-footer.png" alt="SPARK - сервисный центр Apple в Одессе" width="320" height="164" style="height:40px;width:auto"></a>
+        <p>Сервисный центр по ремонту техники Apple в Одессе. Ремонтируем Apple с любовью.</p>
+        <div class="soc">
+          <a href="https://www.instagram.com/spark__odessa/" rel="nofollow noopener" target="_blank" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41 1.27-.06 1.65-.07 4.85-.07M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.31-1.46.72-2.13 1.38C1.35 2.68.94 3.35.63 4.14.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.79.72 1.46 1.38 2.13.67.66 1.34 1.07 2.13 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.31 1.46-.72 2.13-1.38.66-.67 1.07-1.34 1.38-2.13.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.31-.79-.72-1.46-1.38-2.13C21.32 1.35 20.65.94 19.86.63 19.1.33 18.22.13 16.95.07 15.67.01 15.26 0 12 0z"/><path d="M12 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84M12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/><circle cx="18.41" cy="5.59" r="1.44"/></svg></a>
+          <a href="https://t.me/sparks3m" rel="nofollow noopener" target="_blank" aria-label="Telegram"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3l-3.3 15.5c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.3 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5L20.6 2.9c.9-.3 1.6.2 1.3 1.4z"/></svg></a>
+          <a href="https://wa.me/380960755452" rel="nofollow noopener" target="_blank" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.3A10 10 0 1012 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 .9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.4.6c-.1.2-.3.3-.1.6.1.2.6 1 1.3 1.6.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.6-.8c.2-.2.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.3.1.7-.1 1.3z"/></svg></a>
+        </div>
+      </div>
+      <div class="foot reveal">
+        <h3>Ремонт</h3>
+        <ul>
+          <li><a href="../remont-iphone/">Ремонт iPhone</a></li>
+          <li><a href="../remont-macbook/">Ремонт MacBook</a></li>
+          <li><a href="../remont-imac/">Ремонт iMac</a></li>
+          <li><a href="../remont-apple-watch/">Ремонт Apple Watch</a></li>
+          <li><a href="../remont-ipad/">Ремонт iPad</a></li>
+          <li><a href="../remont-airpods/">Ремонт AirPods</a></li>
+        </ul>
+      </div>
+      <div class="foot reveal">
+        <h3>Компания</h3>
+        <ul>
+          <li><a href="../razblokirovka-icloud/">Разблокировка iCloud</a></li>
+          <li><a href="../razblokirovka-iphone/">Разблокировка iPhone</a></li>
+          <li><a href="../diagnostika/">Диагностика</a></li>
+          <li><a href="../vosstanovlenie-dannyh/">Восстановление данных</a></li>
+          <li><a href="../blog/">Блог</a></li>
+          <li><a href="../o-kompanii/">О компании</a></li>
+          <li><a href="../kontakty/">Контакты</a></li>
+        </ul>
+      </div>
+      <div class="foot reveal">
+        <h3>Контакты</h3>
+        <p>ул. Академика Королёва, 23, Одесса<br>Пн-Сб: 10:00-19:00 · Вс: выходной</p>
+        <p><a href="../kontakty/">Как нас найти →</a></p>
+      </div>
+    </div>
+    <div class="copyr">
+      <span>© 2026 SPARK · Сервисный центр Apple в Одессе</span>
+      <span>Прототип нового сайта</span>
+    </div>
+  </div>
+</footer>
+
+<div class="callbar">
+  <a class="btn btn-line" href="tel:+380960755452">☎ Позвонить</a>
+  <a class="btn btn-spark" href="#book">Записаться</a>
+</div>
+
+<div class="fab" aria-label="Связаться в мессенджере">
+  <a class="tg" href="https://t.me/sparks3m" target="_blank" rel="noopener" aria-label="Telegram"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3l-3.3 15.5c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.3 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5L20.6 2.9c.9-.3 1.6.2 1.3 1.4z"/></svg></a>
+  <a class="wa" href="https://wa.me/380960755452" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.3A10 10 0 1012 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 .9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.4.6c-.1.2-.3.3-.1.6.1.2.6 1 1.3 1.6.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.6-.8c.2-.2.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.3.1.7-.1 1.3z"/></svg></a>
+</div>
+'''
+
+MODAL_JS = '''<div class="modal" id="bookModal" aria-hidden="true">
+  <div class="modal-overlay" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bookTitle">
+    <button class="modal-x" type="button" aria-label="Закрыть" data-close>&times;</button>
+    <div class="modal-body">
+      <div class="mf-progress"><div class="mf-progress-row"><span>Заполнение заявки</span><b id="mPct">0%</b></div><div class="mf-progress-track"><i id="mpBar"></i></div></div>
+      <div class="mf-head">
+        <span class="eyebrow">Ремонт {{DEVICE}}</span>
+        <h3 id="bookTitle">Оставьте заявку</h3>
+        <p>Перезвоним за 15 минут, подскажем цену и срок. Диагностика бесплатная.</p>
+      </div>
+      <div class="mf-field">
+        <label for="mName">Ваше имя</label>
+        <div class="mf-input"><input id="mName" type="text" autocomplete="name" placeholder="Как к вам обращаться"><span class="mf-ok">✓</span></div>
+      </div>
+      <div class="mf-field">
+        <label for="mPhone">Телефон</label>
+        <div class="mf-input"><span class="mf-pre">+38</span><input id="mPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(0__) ___-__-__"><span class="mf-ok">✓</span></div>
+        <div class="mf-dots" id="mPhoneDots" aria-hidden="true"><span><i></i><i></i><i></i></span><span><i></i><i></i><i></i></span><span><i></i><i></i></span><span><i></i><i></i></span></div>
+        <div class="mf-hint" id="mPhoneHint">Введите номер мобильного оператора Украины</div>
+      </div>
+      <div class="mf-field">
+        <label for="mDevice">Что случилось</label>
+        <div class="mf-input"><select id="mDevice" aria-label="Что случилось">{{MODALOPTIONS}}</select></div>
+      </div>
+      <button class="btn btn-spark mf-submit" id="mSubmit" type="button" disabled>Отправить заявку</button>
+      <p class="mf-note">Нажимая кнопку, вы соглашаетесь на обработку данных. Мы не передаём их третьим лицам.</p>
+      <div class="mf-trust">
+        <span><b>✓</b> Бесплатная диагностика</span>
+        <span><b>✓</b> Гарантия 12 месяцев</span>
+        <span><b>✓</b> Без предоплаты</span>
+      </div>
+    </div>
+    <div class="modal-success">
+      <div class="ms-check"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="26" cy="26" r="25" fill="rgba(31,174,90,.10)"/><path d="M15 27l7 7 15-16" stroke="#1FAE5A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h3>Заявка принята!</h3>
+      <p>Перезвоним в течение 15 минут в рабочее время.</p>
+      <div class="ms-sum" id="msSummary"></div>
+      <button class="btn btn-line" type="button" data-close>Готово</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var hdr=document.getElementById('hdr');
+  addEventListener('scroll',function(){hdr.style.boxShadow=scrollY>6?'0 6px 20px -14px rgba(0,0,0,.25)':'none'},{passive:true});
+  var b=document.getElementById('burger'),m=document.getElementById('mnav');
+  b.addEventListener('click',function(){var o=m.classList.toggle('open');b.setAttribute('aria-expanded',o)});
+  m.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){m.classList.remove('open');b.setAttribute('aria-expanded',false)})});
+  var rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!rm && 'IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.1});
+    document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+  } else { document.querySelectorAll('.reveal').forEach(function(el){el.classList.add('in')}); }
+
+  (function(){
+    var OPS=[
+      {n:'Kyivstar',c:['67','68','96','97','98','77']},
+      {n:'Vodafone',c:['50','66','95','99']},
+      {n:'lifecell',c:['63','73','93']},
+      {n:'оператор',c:['91','92','94']}
+    ];
+    function detect(code){for(var i=0;i<OPS.length;i++){if(OPS[i].c.indexOf(code)>-1)return OPS[i].n;}return null;}
+    function rawDigits(v){var d=v.replace(/\\D/g,'');if(d.indexOf('38')===0)d=d.slice(2);if(d.length&&d[0]!=='0')d='0'+d;return d.slice(0,10);}
+    function fmt(d){var o='';if(d.length>0)o='('+d.slice(0,3);if(d.length>=3)o+=') ';if(d.length>3)o+=d.slice(3,6);if(d.length>6)o+='-'+d.slice(6,8);if(d.length>8)o+='-'+d.slice(8,10);return o;}
+    function esc(s){return String(s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
+    function wireForm(o){
+      if(!o.name||!o.phone||!o.submit) return;
+      var dots=o.dotsWrap?o.dotsWrap.querySelectorAll('i'):[];
+      var phoneValid=false;
+      function checkPhone(){
+        var d=rawDigits(o.phone.value); o.phone.value=fmt(d);
+        var box=o.phone.closest('.mf-input'); phoneValid=false;
+        if(d.length===0){o.hint.textContent='Введите номер мобильного оператора Украины';o.hint.className='mf-hint js-hint';box.classList.remove('valid','invalid');}
+        else if(d.length<10){o.hint.textContent='Введите номер полностью';o.hint.className='mf-hint js-hint';box.classList.remove('valid','invalid');}
+        else{var op=detect(d.slice(1,3));
+          if(op){phoneValid=true;o.hint.innerHTML='<span class="mf-op">✓ '+op+'</span> номер распознан';o.hint.className='mf-hint js-hint ok';box.classList.add('valid');box.classList.remove('invalid');}
+          else{o.hint.textContent='Проверьте код оператора — такого в Украине нет';o.hint.className='mf-hint js-hint err';box.classList.add('invalid');box.classList.remove('valid');}
+        }
+        for(var i=0;i<dots.length;i++){ if(i<d.length) dots[i].classList.add('on'); else dots[i].classList.remove('on'); }
+        if(o.dotsWrap){o.dotsWrap.classList.remove('valid','invalid'); if(d.length===10) o.dotsWrap.classList.add(phoneValid?'valid':'invalid');}
+        return d;
+      }
+      function checkName(){var ok=o.name.value.trim().length>=2;o.name.closest('.mf-input').classList.toggle('valid',ok);return ok;}
+      function update(){
+        var nameOk=checkName(); var d=checkPhone();
+        var p=Math.round(((nameOk?1:0)+Math.min(d.length/10,1))/2*100);
+        if(o.bar)o.bar.style.width=p+'%'; if(o.pct)o.pct.textContent=p+'%';
+        o.submit.disabled=!(nameOk&&phoneValid);
+      }
+      o.name.addEventListener('input',update);
+      o.phone.addEventListener('input',update);
+      o.submit.addEventListener('click',function(){
+        if(o.submit.disabled)return;
+        if(o.summary)o.summary.innerHTML=
+          '<div><span>Имя</span><b>'+esc(o.name.value.trim())+'</b></div>'+
+          '<div><span>Телефон</span><b>+38 '+esc(o.phone.value)+'</b></div>'+
+          '<div><span>Запрос</span><b>'+esc(o.dev?o.dev.value:'')+'</b></div>';
+        if(o.bar)o.bar.style.width='100%';
+        o.root.classList.add('done');
+      });
+      update();
+    }
+    var modal=document.getElementById('bookModal');
+    if(modal){
+      var card=modal.querySelector('.modal-card'), nameEl=document.getElementById('mName');
+      wireForm({root:card,name:nameEl,phone:document.getElementById('mPhone'),dev:document.getElementById('mDevice'),hint:document.getElementById('mPhoneHint'),bar:document.getElementById('mpBar'),pct:document.getElementById('mPct'),submit:document.getElementById('mSubmit'),dotsWrap:document.getElementById('mPhoneDots'),summary:document.getElementById('msSummary')});
+      var lastFocus=null;
+      function openM(){lastFocus=document.activeElement;modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.classList.add('modal-open');requestAnimationFrame(function(){modal.classList.add('show');});setTimeout(function(){if(nameEl)nameEl.focus();},360);}
+      function closeM(){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');document.body.classList.remove('modal-open');setTimeout(function(){modal.classList.remove('open');card.classList.remove('done');},300);if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+      document.addEventListener('click',function(e){
+        var op=e.target.closest('a[href="#book"],[data-book]');
+        if(op){e.preventDefault();openM();return;}
+        if(e.target.closest('[data-close]'))closeM();
+      });
+      document.addEventListener('keydown',function(e){if(e.key==='Escape'&&modal.classList.contains('open'))closeM();});
+    }
+    var inlineRoot=document.getElementById('bookFormInline');
+    if(inlineRoot){
+      wireForm({root:inlineRoot,name:inlineRoot.querySelector('.js-name'),phone:inlineRoot.querySelector('.js-phone'),dev:inlineRoot.querySelector('.js-device'),hint:inlineRoot.querySelector('.js-hint'),bar:inlineRoot.querySelector('.js-bar'),pct:inlineRoot.querySelector('.js-pct'),submit:inlineRoot.querySelector('.js-submit'),dotsWrap:inlineRoot.querySelector('.js-dots'),summary:inlineRoot.querySelector('.js-summary')});
+    }
+  })();
+
+  (function(){
+    var bar=document.querySelector('.callbar');
+    if(!bar) return;
+    var hero=document.querySelector('.page-hero');
+    var ticking=false;
+    function point(){ return hero ? Math.max(hero.offsetHeight-100, 200) : window.innerHeight*0.8; }
+    function check(){ bar.classList.toggle('show', window.scrollY > point()); ticking=false; }
+    function onScroll(){ if(!ticking){ ticking=true; requestAnimationFrame(check); } }
+    window.addEventListener('scroll', onScroll, {passive:true});
+    window.addEventListener('resize', onScroll, {passive:true});
+    check();
+  })();
+</script>
+</body>
+</html>
+'''
+
+STYLE = '''<style>
+  .bc{padding:14px 0;font-size:.86rem;color:var(--muted)}
+  .bc a{color:var(--muted);font-weight:500}.bc a:hover{color:var(--spark)}
+  .bc span{margin:0 7px;opacity:.5}
+  .page-hero{padding:48px 0 56px;background:linear-gradient(180deg,#fff 0%,var(--bg) 100%)}
+  .page-hero .wrap{display:grid;grid-template-columns:1fr;gap:30px;align-items:center}
+  .page-hero h1{font-size:clamp(1.7rem,4vw,2.6rem);line-height:1.12;font-weight:750;letter-spacing:-.025em;color:var(--ink);margin:18px 0 16px}
+  .page-hero p.sub{font-size:1.05rem;line-height:1.6;color:#41454f;max-width:52ch;margin-bottom:24px}
+  .page-hero .hero-cta{display:flex;flex-wrap:wrap;gap:12px}
+  .page-hero .quick{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:22px;font-size:.9rem;color:var(--muted)}
+  .page-hero .quick b{color:var(--text);font-weight:600}
+  @media(min-width:920px){.page-hero .wrap{grid-template-columns:1.15fr .85fr;gap:48px;padding-top:20px}}
+  .repair-types{display:grid;grid-template-columns:1fr;gap:14px;margin-top:24px}
+  .rtype{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:22px;transition:transform .3s,box-shadow .3s,border-color .3s}
+  .rtype:hover{transform:translateY(-3px);box-shadow:0 18px 40px -20px rgba(16,18,26,.25);border-color:#dbe0e8}
+  .rtype h3{font-size:1.08rem;font-weight:650;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+  .rtype h3 .ri{width:36px;height:36px;border-radius:9px;background:var(--spark-soft);color:var(--spark);display:grid;place-items:center;flex-shrink:0}
+  .rtype h3 .ri svg{width:20px;height:20px}
+  .rtype p{color:var(--muted);font-size:.93rem;margin-bottom:0}
+  @media(min-width:680px){.repair-types{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:920px){.repair-types{grid-template-columns:repeat(3,1fr)}}
+  .other-models{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .other-models a{display:inline-flex;padding:7px 13px;border:1px solid var(--line);border-radius:999px;font-size:.88rem;font-weight:500;color:var(--text);background:#fff;transition:.15s}
+  .other-models a:hover{border-color:var(--spark);color:var(--spark);transform:translateY(-1px)}
+</style>'''
+
+_GRAD = ('<defs><linearGradient id="%(p)sf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a3d45"/>'
+         '<stop offset=".5" stop-color="#15171c"/><stop offset="1" stop-color="#2b2e36"/></linearGradient>'
+         '<linearGradient id="%(p)ss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1f27"/>'
+         '<stop offset="1" stop-color="#0f1117"/></linearGradient></defs>')
+
+def _check(cx, cy, r):
+    rb = r * 0.62
+    return ('<circle cx="%g" cy="%g" r="%g" fill="rgba(31,174,90,.16)"/>'
+            '<circle cx="%g" cy="%g" r="%g" fill="#1FAE5A"/>'
+            '<path d="M%g %g l%g %g l%g %g" stroke="#fff" stroke-width="%g" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+            ) % (cx, cy, r, cx, cy, rb, cx-rb*0.45, cy, rb*0.4, rb*0.42, rb*0.78, -rb*0.9, max(2, r*0.13))
+
+HERO_SVG = {
+ "remont-macbook":
+   '<svg class="phone" viewBox="0 0 340 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ремонт MacBook">'
+   + (_GRAD % {"p": "mb"}) +
+   '<rect x="58" y="14" width="224" height="156" rx="12" fill="url(#mbf)"/>'
+   '<rect x="66" y="22" width="208" height="140" rx="7" fill="url(#mbs)"/>'
+   '<circle cx="170" cy="29" r="1.6" fill="#3a3f4a"/>'
+   + _check(170, 92, 30) +
+   '<polygon points="36,170 304,170 322,196 18,196" fill="url(#mbf)"/>'
+   '<rect x="150" y="170" width="40" height="5" rx="2.5" fill="#0e1014"/>'
+   '</svg>',
+ "remont-imac":
+   '<svg class="phone" viewBox="0 0 320 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ремонт iMac">'
+   + (_GRAD % {"p": "im"}) +
+   '<rect x="44" y="14" width="232" height="170" rx="14" fill="url(#imf)"/>'
+   '<rect x="52" y="22" width="216" height="140" rx="7" fill="url(#ims)"/>'
+   + _check(160, 84, 30) +
+   '<rect x="150" y="184" width="20" height="28" fill="url(#imf)"/>'
+   '<path d="M116 228 q44 -16 88 0 l6 8 H110 z" fill="url(#imf)"/>'
+   '</svg>',
+ "remont-ipad":
+   '<svg class="phone" viewBox="0 0 232 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ремонт iPad">'
+   + (_GRAD % {"p": "ip"}) +
+   '<rect x="36" y="12" width="160" height="296" rx="20" fill="url(#ipf)"/>'
+   '<rect x="44" y="20" width="144" height="280" rx="13" fill="url(#ips)"/>'
+   '<circle cx="116" cy="16" r="1.6" fill="#3a3f4a"/>'
+   + _check(116, 160, 30) +
+   '</svg>',
+ "remont-apple-watch":
+   '<svg class="phone" viewBox="0 0 232 324" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ремонт Apple Watch">'
+   + (_GRAD % {"p": "w"}) +
+   '<polygon points="84,18 148,18 142,82 90,82" fill="url(#wf)"/>'
+   '<polygon points="90,242 142,242 148,306 84,306" fill="url(#wf)"/>'
+   '<rect x="58" y="76" width="116" height="172" rx="36" fill="url(#wf)"/>'
+   '<rect x="69" y="87" width="94" height="150" rx="27" fill="url(#ws)"/>'
+   '<rect x="174" y="120" width="10" height="24" rx="4" fill="url(#wf)"/>'
+   '<rect x="174" y="150" width="9" height="14" rx="4" fill="#2b2e36"/>'
+   + _check(116, 162, 28) +
+   '</svg>',
+ "remont-airpods":
+   '<svg class="phone" viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ремонт AirPods">'
+   + (_GRAD % {"p": "ap"}) +
+   '<ellipse cx="126" cy="92" rx="14" ry="16" fill="#e9ebf2"/>'
+   '<path d="M120 96 h12 v54 a6 6 0 0 1 -12 0 z" fill="#e9ebf2"/>'
+   '<ellipse cx="174" cy="92" rx="14" ry="16" fill="#e9ebf2"/>'
+   '<path d="M168 96 h12 v54 a6 6 0 0 1 -12 0 z" fill="#e9ebf2"/>'
+   '<rect x="100" y="138" width="100" height="118" rx="30" fill="url(#apf)"/>'
+   '<path d="M105 156 H195" stroke="#0e1014" stroke-width="2"/>'
+   '<circle cx="150" cy="172" r="3" fill="#0e1014"/>'
+   + _check(214, 96, 22) +
+   '</svg>',
+}
+
+def hero_art(slug, device):
+    svg = HERO_SVG.get(slug)
+    if not svg:
+        d = esc(device)
+        svg = ('<svg class="phone" viewBox="0 0 300 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ремонт ' + d + '">'
+               + (_GRAD % {"p": "gn"}) + '<rect x="10" y="10" width="280" height="340" rx="24" fill="url(#gns)"/>'
+               + _check(150, 150, 34)
+               + '<text x="150" y="230" text-anchor="middle" fill="#fff" font-family="-apple-system,Arial" font-size="20" font-weight="700">Ремонт ' + d + '</text></svg>')
+    return '<div class="hero-art">\n        ' + svg + '\n      </div>'
+
+def build(slug, device, c):
+    g = lambda k, default="": c.get(k, default) or default
+    title = g("title", "Ремонт %s в Одессе | SPARK" % device)
+    desc = g("description")
+    keywords = g("keywords")
+    ogdesc = g("ogDescription", desc)
+    h1 = g("h1", "Ремонт %s в Одессе" % device)
+    sub = g("sub")
+    quickPrice = g("quickPrice", "")
+    diagTime = g("diagTime", "при вас")
+    rt = c.get("repairTypes") or []
+    pr = c.get("priceRows") or []
+    proc = c.get("process") or []
+    faq = c.get("faq") or []
+    seo = c.get("seo") or []
+    formOptions = c.get("formOptions") or ["%s — ремонт" % device]
+
+    # schema
+    service = {"@context":"https://schema.org","@type":"Service","@id":"https://sparkservice.od.ua/%s/#service"%slug,
+        "name":"Ремонт %s в Одессе"%device,"description":ogdesc or sub,
+        "provider":{"@type":"Organization","name":"SPARK","url":"https://sparkservice.od.ua/","telephone":"+380960755452",
+            "address":{"@type":"PostalAddress","streetAddress":"ул. Академика Королёва, 23","addressLocality":"Одесса","addressCountry":"UA"}},
+        "areaServed":{"@type":"City","name":"Одесса"},"serviceType":"Ремонт %s"%device}
+    crumb = {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+        {"@type":"ListItem","position":1,"name":"Главная","item":"https://sparkservice.od.ua/"},
+        {"@type":"ListItem","position":2,"name":"Ремонт %s"%device,"item":"https://sparkservice.od.ua/%s/"%slug}]}
+    faqpage = {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+        {"@type":"Question","name":f.get("q",""),"acceptedAnswer":{"@type":"Answer","text":f.get("a","")}} for f in faq]}
+    schema_html = "\n".join('<script type="application/ld+json">\n'+json.dumps(x, ensure_ascii=False)+'\n</script>' for x in [service, crumb, faqpage])
+
+    # price rows
+    rows = ['<tr><td class="svc-name free">Диагностика</td><td class="pr free">Бесплатно</td><td class="time">%s</td></tr>'%esc(diagTime)]
+    for r in pr:
+        rows.append('<tr><td class="svc-name">%s</td><td class="pr">%s</td><td class="time">%s</td></tr>'%(
+            esc(r.get("service","")), esc(normprice(r.get("price",""))), esc(r.get("time",""))))
+    pricerows = "\n            ".join(rows)
+
+    # repair cards
+    cards = []
+    for t in rt:
+        cards.append('<div class="rtype reveal">\n          <h3><span class="ri">%s</span> %s</h3>\n          <p>%s</p>\n        </div>'%(
+            icon(t.get("icon","wrench")), esc(t.get("title","")), esc(t.get("desc",""))))
+    repairtypes = "\n        ".join(cards)
+
+    # process
+    steps = []
+    for s in proc:
+        badge = (s.get("badge") or "").strip()
+        bcls = "badge w" if "месяц" in badge.lower() else "badge"
+        bhtml = ('<span class="%s">%s</span>'%(bcls, esc(badge))) if badge else ""
+        steps.append('<div class="step reveal"><h3>%s</h3><p>%s</p>%s</div>'%(esc(s.get("title","")), esc(s.get("desc","")), bhtml))
+    process = "\n        ".join(steps)
+
+    # seo paragraphs
+    seops = "\n        ".join('<p style="color:var(--muted);font-size:.95rem;line-height:1.7;margin-bottom:14px">%s</p>'%esc(p) for p in seo)
+
+    # other links (all repair pages except self + ensure iphone present)
+    others = []
+    for s2, d2 in ALL_REPAIR:
+        if s2 == slug: continue
+        others.append('<a href="../%s/">Ремонт %s</a>'%(s2, esc(d2)))
+    otherlinks = "\n          ".join(others)
+
+    # faq
+    fqs = []
+    for i, f in enumerate(faq):
+        op = " open" if i == 0 else ""
+        fqs.append('<details%s><summary>%s</summary><div class="a">%s</div></details>'%(op, esc(f.get("q","")), esc(f.get("a",""))))
+    faqhtml = "\n        ".join(fqs)
+
+    # form / modal options
+    opts = "".join('<option>%s</option>'%esc(o) for o in formOptions)
+
+    quick_price_html = ('<span>🛠 <b>%s</b></span>'%esc(quickPrice)) if quickPrice else ""
+
+    page = '<!DOCTYPE html>\n<html lang="ru">\n<head>\n'
+    page += '<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+    page += '<title>%s</title>\n'%escA(title)
+    page += '<meta name="description" content="%s">\n'%escA(desc)
+    page += '<meta name="keywords" content="%s">\n'%escA(keywords)
+    page += '<meta name="robots" content="index, follow">\n'
+    page += '<link rel="canonical" href="https://sparkservice.od.ua/%s/">\n'%slug
+    page += '<meta name="theme-color" content="#ffffff">\n'
+    page += '<meta property="og:type" content="website">\n'
+    page += '<meta property="og:title" content="%s">\n'%escA("Ремонт %s в Одессе | SPARK"%device)
+    page += '<meta property="og:description" content="%s">\n'%escA(ogdesc)
+    page += '<meta property="og:url" content="https://sparkservice.od.ua/%s/">\n'%slug
+    page += '<meta property="og:locale" content="ru_RU">\n'
+    page += '<meta property="og:image" content="https://sparkservice.od.ua/og/spark.jpg">\n\n'
+    page += schema_html + '\n\n'
+    page += '<link rel="stylesheet" href="../styles.css">\n' + STYLE + '\n</head>\n<body>\n'
+    page += '<a class="skip" href="#main">Перейти к содержимому</a>\n\n'
+    page += NAV + '\n'
+    page += '<main id="main">\n\n'
+    page += '  <div class="wrap">\n    <div class="bc" aria-label="Хлебные крошки">\n      <a href="../">Главная</a><span>›</span><span>Ремонт %s</span>\n    </div>\n  </div>\n\n'%esc(device)
+    # hero
+    eyebrow = "Ремонт %s в Одессе" % device
+    if h1.strip().lower() == eyebrow.strip().lower():
+        eyebrow = "Сервисный центр Apple"
+    page += '  <section class="page-hero">\n    <div class="wrap">\n      <div class="page-hero-copy">\n'
+    page += '        <span class="eyebrow">%s</span>\n'%esc(eyebrow)
+    page += '        <h1>%s</h1>\n'%esc(h1)
+    page += '        <p class="sub">%s</p>\n'%esc(sub)
+    page += '        <div class="hero-cta">\n          <a class="btn btn-spark" href="#book">Записаться</a>\n          <a class="btn btn-line" href="tel:+380960755452">☎ Позвонить</a>\n        </div>\n'
+    page += '        <p class="cta-note">⏱ <b>Перезвоним за 15 минут</b> · бесплатная диагностика</p>\n'
+    page += '        <div class="trustbar"><span class="tb-star">★ 4.9</span> <b>Google</b><span class="sep">·</span>127 отзывов<span class="sep">·</span><b>32 000</b> ремонтов<span class="sep">·</span>9 лет</div>\n'
+    page += '        <div class="quick">\n          <span>📍 <b>ул. Академика Королёва, 23</b></span>\n          <span>🕐 <b>Пн-Сб 10:00-19:00</b></span>\n          %s\n        </div>\n'%quick_price_html
+    page += '      </div>\n      ' + hero_art(slug, device) + '\n    </div>\n  </section>\n\n'
+    # prices
+    page += '  <section class="sec sec-bg" id="prices">\n    <div class="wrap">\n      <div class="sec-head reveal">\n        <span class="sec-tag">Цены на ремонт %s</span>\n        <h2>Прайс на ремонт %s</h2>\n        <p class="lead-p">Цены ориентировочные. Точную стоимость мастер назовёт после бесплатной диагностики.</p>\n      </div>\n'%(esc(device), esc(device))
+    page += '      <div class="ptable-wrap reveal">\n        <table class="price-table">\n          <thead><tr><th>Услуга</th><th>Цена</th><th>Срок</th></tr></thead>\n          <tbody>\n            %s\n          </tbody>\n        </table>\n      </div>\n      <p class="lead-p" style="margin-top:18px;font-size:.88rem">Цены указаны в гривнах. Диагностика %s бесплатная.</p>\n    </div>\n  </section>\n\n'%(pricerows, esc(device))
+    # repair types
+    page += '  <section class="sec" id="repair-types">\n    <div class="wrap">\n      <div class="sec-head reveal">\n        <span class="sec-tag">Виды ремонта</span>\n        <h2>Что ремонтируем в %s</h2>\n        <p class="lead-p">Беремся за любые неисправности %s. Точную цену и срок назовём после бесплатной диагностики.</p>\n      </div>\n      <div class="repair-types">\n        %s\n      </div>\n    </div>\n  </section>\n\n'%(esc(device), esc(device), repairtypes)
+    # process
+    page += '  <section class="sec sec-ink" id="process">\n    <div class="wrap">\n      <div class="sec-head reveal">\n        <span class="sec-tag">Как мы работаем</span>\n        <h2 style="color:#fff">Ремонт %s за 4 шага</h2>\n      </div>\n      <div class="steps">\n        %s\n      </div>\n    </div>\n  </section>\n\n'%(esc(device), process)
+    # why (generic)
+    page += '''  <section class="sec" id="why">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="sec-tag">Почему выбирают нас</span>
+        <h2>Преимущества ремонта %s в SPARK</h2>
+      </div>
+      <div class="why-grid">
+        <div class="why reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></div><h3>Бесплатная диагностика</h3><p>Найдём причину бесплатно — даже если откажетесь от ремонта.</p></div>
+        <div class="why reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>Гарантия до 12 месяцев</h3><p>На запчасти и работу. Срок фиксируется в чеке.</p></div>
+        <div class="why reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 .5-4.5 4 1.5 6-6-3.5L6 18.5 7.5 12.5 3 8.5 9 8z"/></svg></div><h3>Оригинальные запчасти</h3><p>Оригинал или качественный аналог — выбор за вами, разницу объясним.</p></div>
+        <div class="why reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div><h3>Опытные мастера</h3><p>9 лет на рынке Одессы, более 32 000 выполненных ремонтов.</p></div>
+      </div>
+    </div>
+  </section>\n\n'''%esc(device)
+    # seo text
+    page += '  <section class="sec sec-bg" id="seo-text">\n    <div class="wrap">\n      <div class="reveal" style="max-width:80ch">\n        <h2 style="font-size:1.3rem;margin-bottom:14px">Ремонт %s в Одессе — сервисный центр SPARK</h2>\n        %s\n        <p style="margin-top:18px;font-weight:600;color:var(--ink)">Ремонт другой техники Apple:</p>\n        <div class="other-models">\n          %s\n        </div>\n      </div>\n    </div>\n  </section>\n\n'%(esc(device), seops, otherlinks)
+    # faq
+    page += '  <section class="sec" id="faq">\n    <div class="wrap">\n      <div class="sec-head reveal">\n        <span class="sec-tag">Частые вопросы</span>\n        <h2>Вопросы о ремонте %s</h2>\n      </div>\n      <div class="faq reveal">\n        %s\n      </div>\n    </div>\n  </section>\n\n'%(esc(device), faqhtml)
+    # book
+    page += '  <section class="sec sec-ink" id="book">\n    <div class="wrap">\n      <div class="book">\n        <div class="copy reveal">\n          <span class="sec-tag">Запись на ремонт %s</span>\n          <h2>Опишите поломку — перезвоним за 15 минут</h2>\n          <p>Подскажем предварительную цену и срок, забронируем время. Или просто позвоните — мастер на связи.</p>\n        </div>\n'%esc(device)
+    page += '''        <div class="form sf reveal" id="bookFormInline">
+          <div class="sf-body">
+            <div class="mf-progress"><div class="mf-progress-row"><span>Заполнение заявки</span><b class="js-pct">0%</b></div><div class="mf-progress-track"><i class="js-bar"></i></div></div>
+            <h3 class="sf-title">Заявка на ремонт ''' + esc(device) + '''</h3>
+            <div class="mf-field"><label>Ваше имя</label><div class="mf-input"><input class="js-name" type="text" autocomplete="name" placeholder="Как к вам обращаться"><span class="mf-ok">✓</span></div></div>
+            <div class="mf-field"><label>Телефон</label>
+              <div class="mf-input"><span class="mf-pre">+38</span><input class="js-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(0__) ___-__-__"><span class="mf-ok">✓</span></div>
+              <div class="mf-dots js-dots" aria-hidden="true"><span><i></i><i></i><i></i></span><span><i></i><i></i><i></i></span><span><i></i><i></i></span><span><i></i><i></i></span></div>
+              <div class="mf-hint js-hint">Введите номер мобильного оператора Украины</div>
+            </div>
+            <div class="mf-field"><label>Что случилось</label><div class="mf-input"><select class="js-device" aria-label="Что случилось">''' + opts + '''</select></div></div>
+            <button class="btn btn-spark mf-submit js-submit" type="button" disabled>Отправить заявку</button>
+            <p class="mf-note">Нажимая кнопку, вы соглашаетесь на обработку данных.</p>
+            <div class="mf-trust"><span><b>✓</b> Бесплатная диагностика</span><span><b>✓</b> Гарантия 12 месяцев</span><span><b>✓</b> Без предоплаты</span></div>
+          </div>
+          <div class="sf-success">
+            <div class="ms-check"><svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="26" cy="26" r="25" fill="rgba(31,174,90,.10)"/><path d="M15 27l7 7 15-16" stroke="#1FAE5A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Заявка принята!</h3>
+            <p>Перезвоним в течение 15 минут в рабочее время.</p>
+            <div class="ms-sum js-summary"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>\n\n'''
+    # contacts (generic)
+    page += '''  <section class="sec sec-bg" id="contacts">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="sec-tag">Контакты</span>
+        <h2>Как нас найти</h2>
+        <p class="lead-p">Мы в центре Одессы, рядом с Киевским рынком. Бесплатная диагностика — приходите или вызовите курьера.</p>
+      </div>
+      <div class="loc-grid reveal">
+        <div class="loc-card">
+          <div class="loc-row"><span class="lr-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3s6 7 6 11a6 6 0 11-12 0c0-4 6-11 6-11z"/><circle cx="12" cy="11" r="2"/></svg></span><div><b>Адрес</b><span>ул. Академика Королёва, 23, Одесса</span></div></div>
+          <div class="loc-row"><span class="lr-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><b>Часы работы</b><span>Пн-Сб: 10:00-19:00 · Вс: выходной</span></div></div>
+          <div class="loc-row"><span class="lr-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h4l1.5 5-2 1.2a12 12 0 005.3 5.3l1.2-2 5 1.5v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg></span><div><b>Телефон</b><a href="tel:+380960755452">+38 (096) 075-54-52</a></div></div>
+          <a class="btn btn-spark" href="https://www.google.com/maps/dir/?api=1&destination=46.4035605,30.7226524" target="_blank" rel="noopener">Проложить маршрут</a>
+        </div>
+        <div class="loc-map">
+          <iframe loading="lazy" title="SPARK на карте Одессы" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2751.2871721068323!2d30.720994715589114!3d46.40336147912331!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40c6335e75e1ea93%3A0x24bdf429024f4684!2z0YPQuy4g0JDQutCw0LTQtdC80LjQutCwINCa0L7RgNC-0LvRkdCy0LAsIDIzLA!5e0!3m2!1sru!2sua!4v1667565183335!5m2!1sru!2sua"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>\n\n'''
+    page += FOOTER + '\n'
+    page += MODAL_JS.replace("{{DEVICE}}", esc(device)).replace("{{MODALOPTIONS}}", opts)
+    return page
+
+def main():
+    written, problems = [], []
+    for slug, device in DEVICES:
+        path = os.path.join(BUILD, slug + ".json")
+        if not os.path.exists(path):
+            problems.append("MISSING JSON: " + slug); continue
+        try:
+            c = json.load(open(path, encoding="utf-8"))
+        except Exception as e:
+            problems.append("BAD JSON %s: %s" % (slug, e)); continue
+        # quick field check
+        for k in ("title","description","h1","sub","repairTypes","priceRows","process","faq","seo","formOptions"):
+            if not c.get(k): problems.append("%s: пусто/нет поля '%s'" % (slug, k))
+        # unknown icons
+        for t in (c.get("repairTypes") or []):
+            if str(t.get("icon","")).strip().lower() not in ICONS:
+                problems.append("%s: иконка '%s' -> fallback wrench" % (slug, t.get("icon")))
+        out_dir = os.path.join(REPO, slug)
+        os.makedirs(out_dir, exist_ok=True)
+        html_out = build(slug, device, c)
+        open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8").write(html_out)
+        written.append("%s (%d симв., %d видов, %d цен, %d FAQ)" % (slug, len(html_out), len(c.get("repairTypes") or []), len(c.get("priceRows") or []), len(c.get("faq") or [])))
+    print("=== WRITTEN ===")
+    for w in written: print("  ✓", w)
+    print("=== NOTES/PROBLEMS ===")
+    if problems:
+        for p in problems: print("  -", p)
+    else:
+        print("  нет")
+
+if __name__ == "__main__":
+    main()
