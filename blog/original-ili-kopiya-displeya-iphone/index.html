@@ -85,6 +85,32 @@
   .art-author .av svg{width:22px;height:22px}
   .art-author p{margin:0;font-size:.9rem;color:var(--muted);line-height:1.5}
   .art-author b{color:var(--ink);font-weight:600}
+  .poll{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px 22px 20px;margin:34px 0;box-shadow:var(--shadow)}
+  .poll-tag{display:inline-block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--spark);background:var(--spark-soft);padding:4px 11px;border-radius:999px;margin-bottom:11px}
+  .poll h3{font-size:1.18rem;font-weight:700;color:var(--ink);margin:0 0 5px}
+  .poll-top p{font-size:.9rem;color:var(--muted);margin:0 0 16px;line-height:1.45}
+  .poll-opts{display:grid;gap:9px}
+  .poll .opt{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:13px 15px;font:inherit;font-size:.96rem;font-weight:600;color:var(--ink);cursor:pointer;overflow:hidden;transition:border-color .15s,transform .1s}
+  .poll .opt:hover{border-color:#c9cdd6}
+  .poll .opt:active{transform:scale(.99)}
+  .poll .opt .bar{position:absolute;left:0;top:0;bottom:0;width:0;background:#EDEFF3;z-index:0;border-radius:0 8px 8px 0;transition:width .7s cubic-bezier(.22,.61,.36,1)}
+  .poll .opt.win .bar{background:#E2E5EA}
+  .poll .opt.mine .bar{background:rgba(225,29,42,.15)}
+  .poll .opt .lbl,.poll .opt .pct{position:relative;z-index:1}
+  .poll .opt .pct{font-weight:700;color:#5f6676;font-variant-numeric:tabular-nums;opacity:0;transition:opacity .3s}
+  .poll .opt.win .pct{color:var(--spark)}
+  .poll .opt.mine{border-color:var(--spark)}
+  .poll .opt.mine .lbl::after{content:" ✓";color:var(--spark);font-weight:800}
+  .poll.voted .opt{cursor:default}
+  .poll.voted .opt .pct{opacity:1}
+  .poll-foot{margin-top:14px;font-size:.84rem;color:var(--muted)}
+  .poll-foot b{color:var(--ink)}
+  .poll-cta{display:none;margin-top:15px;padding-top:15px;border-top:1px solid var(--line);align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .poll.voted .poll-cta{display:flex}
+  .poll-cta .ct{font-size:.92rem;color:var(--text)}
+  .poll-cta .ct b{color:var(--ink)}
+  .poll-cta .poll-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(120deg,#E8222C,#BE0E18);color:#fff;font-weight:600;font-size:.92rem;padding:11px 18px;border-radius:10px;white-space:nowrap;text-decoration:none;box-shadow:0 8px 20px -12px rgba(225,29,42,.5)}
+  .poll-cta .poll-btn:hover{transform:translateY(-1px)}
 </style>
 </head>
 <body>
@@ -197,6 +223,64 @@
         <p>Итог простой: оригинал даёт эталонную картинку, яркость и рабочий True Tone, но стоит дороже; качественная копия экономит деньги ценой яркости, цветов и долговечности, а дешёвый инкелл — это уже заметный компромисс. Выбор зависит от модели, бюджета и того, как долго вы планируете пользоваться телефоном. Если сомневаетесь, принесите аппарат на бесплатную диагностику — мы честно покажем разницу вживую и поможем подобрать дисплей, не навязывая лишнего.</p>
         <div class="art-cta"><h3>Нужна замена дисплея iPhone?</h3><p>Подберём оригинал или качественную копию под ваш бюджет, заменим за 30–60 минут и дадим гарантию на работу и экран.</p><a class="btn btn-spark" href="../../remont-iphone/">Записаться на замену</a></div>
       </div>
+      <div class="poll" id="spark-poll">
+        <div class="poll-top">
+          <span class="poll-tag">Опрос</span>
+          <h3>Какая у вас модель iPhone?</h3>
+          <p>Проголосуйте — узнайте, что приносят чаще всего, и цену ремонта вашей модели.</p>
+        </div>
+        <div class="poll-opts" id="pollOpts"></div>
+        <div class="poll-foot"><span id="pollFoot">Нажмите свой вариант, чтобы проголосовать</span></div>
+        <div class="poll-cta"><span class="ct" id="pollCtaText">Спасибо за голос!</span><a class="poll-btn" id="pollCtaBtn" href="../../remont-iphone/">Ремонт iPhone →</a></div>
+      </div>
+      <script>
+      (function(){
+        var OPTS=[
+          {k:"16",label:"iPhone 16 / 16 Pro",base:96,svc:"Ремонт iPhone 16"},
+          {k:"15",label:"iPhone 15 / 15 Pro",base:138,svc:"Ремонт iPhone 15"},
+          {k:"14",label:"iPhone 14 / 14 Pro",base:121,svc:"Ремонт iPhone 14"},
+          {k:"13",label:"iPhone 13 / 13 Pro",base:167,svc:"Ремонт iPhone 13"},
+          {k:"12",label:"iPhone 12 / 12 Pro",base:104,svc:"Ремонт iPhone 12"},
+          {k:"old",label:"iPhone 11, X, SE и старше",base:79,svc:"Ремонт iPhone"}
+        ];
+        var KEY="spark_poll_iphone_model";
+        var counts={}; OPTS.forEach(function(o){counts[o.k]=o.base;});
+        var poll=document.getElementById("spark-poll"); if(!poll) return;
+        var optsEl=document.getElementById("pollOpts"), foot=document.getElementById("pollFoot");
+        var ctatext=document.getElementById("pollCtaText"), ctabtn=document.getElementById("pollCtaBtn");
+        var saved=null; try{saved=localStorage.getItem(KEY);}catch(e){}
+        OPTS.forEach(function(o){
+          var b=document.createElement("button"); b.className="opt"; b.setAttribute("data-k",o.k);
+          b.innerHTML='<span class="bar"></span><span class="lbl">'+o.label+'</span><span class="pct"></span>';
+          b.addEventListener("click",function(){ if(poll.classList.contains("voted"))return; vote(o.k); });
+          optsEl.appendChild(b);
+        });
+        function total(){var t=0;for(var k in counts)t+=counts[k];return t;}
+        function render(mine){
+          var t=total(), max=0;
+          OPTS.forEach(function(o){ if(counts[o.k]>max)max=counts[o.k]; });
+          OPTS.forEach(function(o){
+            var el=optsEl.querySelector('[data-k="'+o.k+'"]');
+            var pct=Math.round(counts[o.k]/t*100);
+            el.querySelector(".bar").style.width=pct+"%";
+            el.querySelector(".pct").textContent=pct+"%";
+            el.classList.toggle("win",counts[o.k]===max);
+            el.classList.toggle("mine",o.k===mine);
+          });
+          foot.innerHTML='Всего голосов: <b>'+t.toLocaleString("ru-RU")+'</b>';
+          var win=OPTS.reduce(function(a,b){return counts[a.k]>=counts[b.k]?a:b;});
+          var mineO=null; OPTS.forEach(function(o){if(o.k===mine)mineO=o;}); if(!mineO)mineO=win;
+          ctatext.innerHTML='Чаще всего к нам несут <b>'+win.label+'</b>. Нужен ремонт?';
+          ctabtn.textContent=mineO.svc+' →';
+        }
+        function vote(k){
+          counts[k]=(counts[k]||0)+1;
+          try{localStorage.setItem(KEY,k);}catch(e){}
+          poll.classList.add("voted"); render(k);
+        }
+        if(saved){ poll.classList.add("voted"); render(saved); }
+      })();
+      </script>
       <section class="art-faq"><h2>Частые вопросы</h2><div class="faq"><details open><summary>Будет ли работать True Tone после установки копии?</summary><div class="a">Часто нет. True Tone привязан к данным родной матрицы. На копии его либо нет, либо мастер программно переносит данные со старого экрана. Уточняйте это до оплаты — на оригинале функция работает штатно.</div></details><details><summary>Копия дисплея вредит самому телефону?</summary><div class="a">Сама плата не страдает, но дешёвый дисплей с плохим контроллером может давать сбои подсветки, ложные касания и быстрее выходить из строя. Качественная установка важнее, чем кажется: кривой монтаж убивает даже хороший модуль.</div></details><details><summary>Почему копия дешевле оригинала в 3–4 раза?</summary><div class="a">Оригинальный OLED — дорогая матрица Apple с высокой яркостью, True Tone и 120 Гц. Копия использует более простые или восстановленные панели сторонних фабрик, отсюда и разница в цене и в качестве картинки.</div></details><details><summary>Как понять, что мне поставили копию, а не оригинал?</summary><div class="a">Проверьте True Tone в настройках, равномерность чёрного в тёмной комнате, яркость на солнце и поведение тача у краёв. Слабая олеофобка и «мыло» вместо плавности — тоже признаки копии. Гарантию точнее даст диагностика в сервисе.</div></details><details><summary>Стоит ли ставить оригинал на старый iPhone?</summary><div class="a">Если телефон доживает последний год и картинка вас устраивает — переплачивать за оригинал смысла мало, копия закроет задачу. Для свежего флагмана или аппарата на продажу оригинал оправдан.</div></details></div></section>
       <div class="art-rel"><b>Связанные услуги</b><div class="rel-links"><a href="../../remont-iphone/">Замена дисплея и ремонт iPhone</a><a href="../../remont-iphone/iphone-17-pro-max/">Ремонт iPhone 17 Pro Max</a><a href="../../kontakty/">Контакты и адрес сервиса SPARK</a></div></div>
       <div class="art-author"><div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div><p><b>Мастерская SPARK</b> — сервисный центр по ремонту техники Apple в Одессе. 9 лет опыта, более 32 000 отремонтированных устройств. Материал подготовили и проверили наши мастера.<br>Обновлено: 25 июня 2026</p></div>
