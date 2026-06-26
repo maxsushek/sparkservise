@@ -8,6 +8,7 @@ import os, re, glob
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = "https://sparkservice.od.ua"
 ASSETS = ("styles.css", "main.js", "logo.png", "logo-footer.png")
+IMG_EXT = (".webp", ".jpg", ".jpeg", ".png", ".avif")
 SKIP = ("http://", "https://", "mailto:", "tel:", "javascript:", "data:", "#")
 HDR = '<header class="site" id="hdr">'
 MARK = '<!--lang-redirect-->'
@@ -91,6 +92,10 @@ def wire_ua(t, ua_dir, UA):
         base = path.split('/')[-1]
         if base in ASSETS:
             return '%s="%s%s"' % (attr, prefix, base)
+        cleanp = path[2:] if path.startswith('./') else path
+        if '/' not in cleanp and cleanp.lower().endswith(IMG_EXT):
+            sp_ru = ua_dir[3:].strip('/') if ua_dir.startswith('ua/') else ''
+            return '%s="%s%s%s"' % (attr, '../' * len(segs(ua_dir)), (sp_ru + '/' if sp_ru else ''), cleanp)
         if path.endswith('/'):
             tgt = os.path.normpath(os.path.join(ua_dir, path)).replace(os.sep, '/')
             parts = [x for x in tgt.split('/') if x and x != '.']
