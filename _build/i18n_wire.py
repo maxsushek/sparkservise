@@ -13,6 +13,7 @@ HDR = '<header class="site" id="hdr">'
 MARK = '<!--lang-redirect-->'
 REDIR = MARK + "<script>(function(){try{var c=document.documentElement.lang==='uk'?'uk':'ru';var w=localStorage.getItem('spark_lang');if(!w){w=((navigator.language||navigator.userLanguage||'')+'').toLowerCase().indexOf('uk')===0?'uk':'ru';}var L=document.querySelectorAll('.lang a');for(var i=0;i<L.length;i++){(function(a){a.addEventListener('click',function(){try{localStorage.setItem('spark_lang',(a.textContent||'').trim().toUpperCase()==='UA'?'uk':'ru');}catch(e){}});})(L[i]);}if(w===c)return;if(sessionStorage.getItem('spark_rd'))return;var t=null;for(var j=0;j<L.length;j++){var x=(L[j].textContent||'').trim().toUpperCase();var h=L[j].getAttribute('href');if(h&&h!=='#'&&((w==='uk'&&x==='UA')||(w==='ru'&&x==='RU')))t=h;}if(t){sessionStorage.setItem('spark_rd','1');location.replace(t);}}catch(e){}})();</script>"
 lang_re = re.compile(r'<span class="lang">.*?</a></span>', re.S)
+MNAV_LANG = '<div class="mnav-lang"><span class="lang"><a href="#">UA</a><span>/</span><a href="#">RU</a></span></div>'
 
 def segs(p):
     return [x for x in p.strip('/').split('/') if x]
@@ -62,12 +63,17 @@ def set_switcher(t, ua_active, other_href):
         sw = '<span class="lang"><a class="on" href="#">UA</a><span>/</span><a href="%s">RU</a></span>' % other_href
     else:
         sw = '<span class="lang"><a href="%s">UA</a><span>/</span><a class="on" href="#">RU</a></span>' % other_href
-    return lang_re.sub(lambda m: sw, t, count=1)
+    return lang_re.sub(lambda m: sw, t, count=0)   # wire ALL .lang (topbar + mobile menu)
 
 def add_redirect(t):
     if MARK in t:
         return t
     return t.replace(HDR, REDIR + '\n' + HDR, 1) if HDR in t else t
+
+def add_mnav_lang(t):
+    if 'mnav-lang' in t:
+        return t
+    return re.sub(r'(<nav class="mnav"[^>]*>)', lambda m: m.group(0) + '\n  ' + MNAV_LANG, t, count=1)
 
 def wire_ua(t, ua_dir, UA):
     """ua_dir like 'ua' or 'ua/remont-iphone'; fix assets + internal page links (mask .lang)."""
@@ -114,7 +120,8 @@ def main():
         t = set_canonical(t, url_ua(sp))
         t = set_og_url(t, url_ua(sp))
         t = set_hreflang(t, sp)
-        t = set_switcher(t, True, reldir(sp, ua_dir))   # RU counterpart
+        t = add_mnav_lang(t)
+        t = set_switcher(t, True, reldir(sp, ua_dir))   # RU counterpart (wires topbar + mnav .lang)
         t = add_redirect(t)
         open(f, 'w', encoding='utf-8').write(t)
         n_ua += 1
@@ -128,7 +135,8 @@ def main():
         t = set_og_url(t, url_ru(P))
         t = set_hreflang(t, P)
         ua_dir = ('ua/' + P).rstrip('/')
-        t = set_switcher(t, False, reldir(ua_dir, P))   # UA counterpart
+        t = add_mnav_lang(t)
+        t = set_switcher(t, False, reldir(ua_dir, P))   # UA counterpart (wires topbar + mnav .lang)
         t = add_redirect(t)
         open(f, 'w', encoding='utf-8').write(t)
         n_ru += 1

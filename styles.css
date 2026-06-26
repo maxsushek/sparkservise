@@ -76,6 +76,13 @@
   .mnav a:hover::after{border-color:var(--spark)}
   .mnav a.cta{justify-content:center;gap:0;margin:14px 16px 18px;padding:15px;background:linear-gradient(135deg,#E8222C,#C5141E);color:#fff;font-weight:700;border-radius:12px;box-shadow:0 8px 22px -10px rgba(225,29,42,.55);position:relative;overflow:hidden}
   .mnav a.cta .mi,.mnav a.cta::after{display:none;content:none}
+  .mnav-lang{display:flex;align-items:center;gap:10px;padding:14px 22px 8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  .mnav-lang::before{content:"Мова / Язык";font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--spark);font-weight:800}
+  .mnav-lang .lang{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-left:auto}
+  .mnav-lang .lang a{margin:0;padding:8px 18px;font-size:.95rem;font-weight:600;color:var(--text);display:inline-flex;border-radius:0}
+  .mnav-lang .lang a.on{background:var(--spark);color:#fff}
+  .mnav-lang .lang a::after{display:none;content:none}
+  .mnav-lang .lang>span{display:none}
 
   .hero{background:linear-gradient(180deg,#fff 0%,var(--bg) 100%)}
   .hero .wrap{display:grid;grid-template-columns:1fr;gap:36px;align-items:center;padding:58px 20px 64px}
