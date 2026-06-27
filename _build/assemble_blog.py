@@ -66,7 +66,7 @@ def cover(slug, icon_key, alt):
 
 def inline_figure(alt, caption):
     return ('<figure class="art-fig">'
-            '<img src="inline.webp" alt="%s" '
+            '<img src="inline.webp" alt="%s" width="800" height="500" loading="lazy" decoding="async" '
             'onload="var p=this.nextElementSibling;if(p)p.style.display=\'none\'" onerror="this.remove()">'
             '<div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> Фото скоро добавим</div>'
             '<figcaption>%s</figcaption></figure>') % (escA(alt), esc(caption))

@@ -117,7 +117,7 @@
   .stats .n .sub{color:var(--spark)}
   .stats .l{font-size:.84rem;color:#A9AEBC;margin-top:3px}
 
-  .sec{padding:60px 0}
+  .sec{padding:60px 0;content-visibility:auto;contain-intrinsic-size:auto 480px}
   .sec-bg{background:var(--bg)}
   .sec-ink{background:linear-gradient(180deg,#15161B,#0C0D11);color:#fff}
   .sec-head{margin-bottom:32px;max-width:64ch}
@@ -261,7 +261,7 @@
   .form .ok-msg .ck{width:48px;height:48px;border-radius:50%;background:var(--spark-soft);color:var(--spark);display:grid;place-items:center;margin:0 auto 12px;font-size:1.5rem}
   .form.sent .fb{display:none}.form.sent .ok-msg{display:block}
 
-  footer.site{background:var(--ink);color:#A9AEBC;padding:56px 0 92px}
+  footer.site{background:var(--ink);color:#A9AEBC;padding:56px 0 92px;content-visibility:auto;contain-intrinsic-size:auto 360px}
   .foot-grid{display:grid;grid-template-columns:1fr;gap:30px}
   .foot .brand img{height:40px;margin-bottom:16px}
   .foot a:hover{color:#fff}
