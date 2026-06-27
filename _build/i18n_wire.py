@@ -7,7 +7,7 @@ import os, re, glob
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = "https://sparkservice.od.ua"
-ASSETS = ("styles.css", "main.js", "logo.png", "logo-footer.png")
+ASSETS = ("styles.css", "main.js", "logo.png", "logo-footer.png", "analytics.js")
 IMG_EXT = (".webp", ".jpg", ".jpeg", ".png", ".avif")
 SKIP = ("http://", "https://", "mailto:", "tel:", "javascript:", "data:", "#")
 HDR = '<header class="site" id="hdr">'
