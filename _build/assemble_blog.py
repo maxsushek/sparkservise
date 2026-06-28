@@ -10,10 +10,11 @@ ARTICLES = [
     ("original-ili-kopiya-displeya-iphone", "Дисплеи", "screen", "2026-06-18", "18 июня 2026"),
     ("iphone-upal-v-vodu-chto-delat", "Первая помощь", "water", "2026-06-21", "21 июня 2026"),
     ("pochemu-bystro-saditsya-batareya", "Аккумулятор", "battery", "2026-06-24", "24 июня 2026"),
+    ("iphone-ne-zaryazhaetsya", "Зарядка", "charge", "2026-06-28", "28 июня 2026"),
 ]
 SLUGS = [a[0] for a in ARTICLES]
-MODIFIED_ISO = "2026-06-25"
-MODIFIED_DISP = "25 июня 2026"
+MODIFIED_ISO = "2026-06-28"
+MODIFIED_DISP = "28 июня 2026"
 
 def word_count(a):
     txt = (a.get("lead","") or "") + " " + (a.get("conclusion","") or "")
@@ -29,6 +30,8 @@ ICON = {
  "screen": '<rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/>',
  "water": '<path d="M12 3s6 7 6 11a6 6 0 11-12 0c0-4 6-11 6-11z"/>',
  "battery": '<rect x="3" y="8" width="16" height="8" rx="2"/><path d="M21 11v2M7 12h6"/>',
+ "charge": '<path d="M13 3 L6 13 H11 L10 21 L18 10 H13 Z"/>',
+ "power": '<path d="M12 4 V12"/><path d="M7.8 6.3 a7 7 0 1 0 8.4 0"/>',
 }
 
 def esc(s): return html.escape(str(s), quote=False)
