@@ -283,7 +283,9 @@ def render(tid):
 
     # Hero-арт
     out_dir = os.path.join(REPO, "remont-iphone", slug)
-    has_photo = os.path.exists(os.path.join(out_dir, slug + ".webp"))
+    photo_file = next((slug + e for e in (".webp", ".jpg", ".jpeg", ".png")
+                       if os.path.exists(os.path.join(out_dir, slug + e))), None)
+    has_photo = photo_file is not None
     svg = (
         '<svg class="phone" viewBox="0 0 300 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="%s">\n'
         '              <defs>\n'
@@ -305,8 +307,8 @@ def render(tid):
         '            </svg>' % (esc_attr(name), name))
     if has_photo:
         hero_art = ('<div class="model-photo-wrap">\n'
-            '          <img class="model-photo" src="%s.webp" alt="Ремонт %s в Одессе — сервисный центр SPARK" width="500" height="500" fetchpriority="high" onload="var f=document.getElementById(\'photoFallback\');if(f)f.remove()" onerror="this.remove()">\n'
-            '          <div id="photoFallback" class="photo-fallback">\n            %s\n          </div>\n        </div>' % (slug, esc_attr(name), svg))
+            '          <img class="model-photo" src="%s" alt="Ремонт %s в Одессе — сервисный центр SPARK" width="500" height="500" fetchpriority="high" onload="var f=document.getElementById(\'photoFallback\');if(f)f.remove()" onerror="this.remove()">\n'
+            '          <div id="photoFallback" class="photo-fallback">\n            %s\n          </div>\n        </div>' % (photo_file, esc_attr(name), svg))
     else:
         hero_art = ('<div class="model-photo-wrap">\n          <div class="photo-fallback">\n            %s\n          </div>\n        </div>' % svg)
 
