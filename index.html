@@ -111,6 +111,17 @@
   .drop a:hover{background:var(--bg);color:var(--spark)}
   .drop a .di{width:22px;height:22px;color:var(--muted)}
   .drop a:hover .di{color:var(--spark)}
+  a[aria-current="page"]{cursor:default}
+  .nav-links>a[aria-current="page"],.has-drop>a[aria-current="page"]{color:var(--spark);border-bottom:2px solid var(--spark)}
+  .has-drop>a[aria-current="page"]:hover{color:var(--spark)}
+  .drop a[aria-current="page"]{color:var(--spark);background:var(--bg)}
+  .drop a[aria-current="page"] .di{color:var(--spark)}
+  .drop a[aria-current="page"]:hover{background:var(--bg)}
+  .mnav a[aria-current="page"]{color:var(--spark)}
+  .mnav a[aria-current="page"] .mi{color:var(--spark)}
+  .mnav a[aria-current="page"]::after{display:none}
+  .foot a[aria-current="page"]{color:var(--spark);text-decoration:underline;text-underline-offset:3px}
+  .foot a[aria-current="page"]:hover{color:var(--spark)}
   .nav-right{margin-left:auto;display:flex;align-items:center;gap:14px}
   .hphone{display:none;text-align:right;line-height:1.15}
   .hphone a{font-weight:700;font-size:1.06rem;color:var(--ink)}
