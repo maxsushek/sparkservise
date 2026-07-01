@@ -222,7 +222,7 @@ def render(dev, m):
     svg = hero_svg(dev, name)
     if has_photo:
         hero_art = ('<div class="model-photo-wrap">\n'
-            '          <img class="model-photo" src="%s.webp" alt="Ремонт %s в Одессе — сервисный центр SPARK" width="500" height="500" fetchpriority="high" onload="var f=document.getElementById(\'photoFallback\');if(f)f.remove()" onerror="this.remove()">\n'
+            '          <img class="model-photo" src="%s.webp" alt="Ремонт %s в сервисном центре SPARK, Одесса" width="500" height="500" fetchpriority="high" onload="var f=document.getElementById(\'photoFallback\');if(f)f.remove()" onerror="this.remove()">\n'
             '          <div id="photoFallback" class="photo-fallback">\n            %s\n          </div>\n        </div>' % (slug, esc_attr(name), svg))
     else:
         hero_art = '<div class="model-photo-wrap">\n          <div class="photo-fallback">\n            %s\n          </div>\n        </div>' % svg
