@@ -32,7 +32,7 @@
     }
   }[lang];
 
-  var MIN_MS = 30000, MIN_SCROLL = 0.5, CLOSE_DAYS = 7;
+  var MIN_MS = 15000, MIN_SCROLL = 0.3, CLOSE_DAYS = 7;
   var K_SEEN = "spark_exit_seen", K_CLOSED = "spark_exit_closed", K_LEAD = "spark_exit_lead";
   var preview = /[?&]popup=1/.test(location.search);
   var start = Date.now(), maxScroll = 0, shown = false, armed = false, modal = null;
