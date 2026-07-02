@@ -1,7 +1,8 @@
-/* SPARK exit-intent popup — та же форма (.modal / .mf-*), что и основная заявка сайта:
-   имя + телефон с точками-индикатором и определением оператора + услуга + прогресс + сводка.
+/* SPARK exit-intent popup — компактный: заголовок «Не нашли что искали?» + ОДНО поле телефона
+   с «начинкой» основной формы сайта (маска, точки-индикатор, определение оператора).
+   Shell/анимация/поведение — как у модалки сайта (.modal / .mf-*). Появляется при попытке уйти.
    Показ: ≥30с И ≥50% прокрутки И exit-intent. Лимиты: 1/сессия · 7 дней после закрытия · никогда после заявки.
-   Превью без лимитов: ?popup=1. Форма помечена .js-submit/.js-phone/.js-name/.js-device → лид ловит analytics.js. */
+   Превью без лимитов: ?popup=1. Классы .js-submit/.js-phone/.js-device → лид ловит analytics.js. */
 (function () {
   "use strict";
   if (window.__sparkExit) return;
@@ -11,31 +12,23 @@
   var T = {
     ru: {
       badge: "Бесплатная консультация", title: "Не нашли что искали?",
-      desc: "Оставьте номер — специалист перезвонит и бесплатно ответит на вопросы.",
-      progress: "Заполнение заявки", nameLabel: "Ваше имя", namePh: "Как к вам обращаться",
-      phoneLabel: "Телефон", deviceLabel: "Что вас интересует",
-      opts: ["Ремонт iPhone", "Ремонт MacBook / iMac", "Ремонт iPad / Apple Watch / AirPods", "Разблокировка iCloud", "Другое"],
-      submit: "Жду звонка", note: "Нажимая кнопку, вы соглашаетесь на обработку данных. Мы не передаём их третьим лицам.",
+      desc: "Оставьте номер телефона — наш специалист свяжется с вами и бесплатно ответит на вопросы.",
+      submit: "Жду звонка", note: "Перезвоним в течение 15 минут. Данные не передаём третьим лицам.",
       trust: ["Бесплатная диагностика", "Гарантия 12 месяцев", "Без предоплаты"],
       hint: "Введите номер мобильного оператора Украины", hintFull: "Введите номер полностью",
-      hintErr: "Проверьте код оператора", hintOk: "номер распознан",
-      sumName: "Имя", sumPhone: "Телефон", sumReq: "Запрос",
+      hintErr: "Проверьте код оператора", hintOk: "номер распознан", sumPhone: "Телефон",
       okTitle: "Заявка принята!", okText: "Перезвоним в течение 15 минут в рабочее время.",
-      done: "Готово", close: "Закрыть"
+      done: "Готово", close: "Закрыть", device: "Обратный звонок (exit popup)"
     },
     uk: {
       badge: "Безкоштовна консультація", title: "Не знайшли те, що шукали?",
-      desc: "Залиште номер — спеціаліст передзвонить і безкоштовно відповість на запитання.",
-      progress: "Заповнення заявки", nameLabel: "Ваше ім'я", namePh: "Як до вас звертатися",
-      phoneLabel: "Телефон", deviceLabel: "Що вас цікавить",
-      opts: ["Ремонт iPhone", "Ремонт MacBook / iMac", "Ремонт iPad / Apple Watch / AirPods", "Розблокування iCloud", "Інше"],
-      submit: "Чекаю на дзвінок", note: "Натискаючи кнопку, ви погоджуєтеся на обробку даних. Ми не передаємо їх третім особам.",
+      desc: "Залиште номер телефону — наш спеціаліст зв'яжеться з вами й безкоштовно відповість на запитання.",
+      submit: "Чекаю на дзвінок", note: "Передзвонимо протягом 15 хвилин. Дані не передаємо третім особам.",
       trust: ["Безкоштовна діагностика", "Гарантія 12 місяців", "Без передоплати"],
       hint: "Введіть номер мобільного оператора України", hintFull: "Введіть номер повністю",
-      hintErr: "Перевірте код оператора", hintOk: "номер розпізнано",
-      sumName: "Ім'я", sumPhone: "Телефон", sumReq: "Запит",
+      hintErr: "Перевірте код оператора", hintOk: "номер розпізнано", sumPhone: "Телефон",
       okTitle: "Заявку прийнято!", okText: "Передзвонимо протягом 15 хвилин у робочий час.",
-      done: "Готово", close: "Закрити"
+      done: "Готово", close: "Закрити", device: "Зворотний дзвінок (exit popup)"
     }
   }[lang];
 
@@ -63,7 +56,7 @@
     if (sh > 0) { var p = (scrollY + innerHeight) / sh; if (p > maxScroll) maxScroll = p; }
   }, { passive: true });
 
-  // --- телефон (идентично основной форме сайта) ---
+  // --- телефон (идентично основной форме сайта: маска + точки + оператор) ---
   var OPS = [{ n: "Kyivstar", c: ["67", "68", "96", "97", "98", "77"] }, { n: "Vodafone", c: ["50", "66", "95", "99"] }, { n: "lifecell", c: ["63", "73", "93"] }, { n: "оператор", c: ["91", "92", "94"] }];
   function detect(code) { for (var i = 0; i < OPS.length; i++) if (OPS[i].c.indexOf(code) > -1) return OPS[i].n; return null; }
   function rawDigits(v) { var d = v.replace(/\D/g, ""); if (d.indexOf("38") === 0) d = d.slice(2); if (d.length && d[0] !== "0") d = "0" + d; return d.slice(0, 10); }
@@ -73,22 +66,19 @@
   function build() {
     modal = document.createElement("div");
     modal.className = "modal"; modal.id = "spkExitModal"; modal.setAttribute("aria-hidden", "true");
-    var opts = T.opts.map(function (o) { return "<option>" + o + "</option>"; }).join("");
     var trust = T.trust.map(function (t) { return "<span><b>✓</b> " + t + "</span>"; }).join("");
     modal.innerHTML =
       '<div class="modal-overlay" data-spk-close></div>' +
       '<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="spkExitTitle">' +
         '<button class="modal-x" type="button" aria-label="' + T.close + '" data-spk-close>&times;</button>' +
         '<div class="modal-body">' +
-          '<div class="mf-progress"><div class="mf-progress-row"><span>' + T.progress + '</span><b class="spk-pct">0%</b></div><div class="mf-progress-track"><i class="spk-bar"></i></div></div>' +
           '<div class="mf-head"><span class="eyebrow">' + T.badge + '</span><h3 id="spkExitTitle">' + T.title + '</h3><p>' + T.desc + '</p></div>' +
-          '<div class="mf-field"><label>' + T.nameLabel + '</label><div class="mf-input"><input class="js-name spk-name" type="text" autocomplete="name" placeholder="' + T.namePh + '"><span class="mf-ok">✓</span></div></div>' +
-          '<div class="mf-field"><label>' + T.phoneLabel + '</label>' +
+          '<div class="mf-field">' +
             '<div class="mf-input"><span class="mf-pre">+38</span><input class="js-phone spk-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(0__) ___-__-__"><span class="mf-ok">✓</span></div>' +
             '<div class="mf-dots spk-dots" aria-hidden="true"><span><i></i><i></i><i></i></span><span><i></i><i></i><i></i></span><span><i></i><i></i></span><span><i></i><i></i></span></div>' +
             '<div class="mf-hint spk-hint">' + T.hint + '</div>' +
           '</div>' +
-          '<div class="mf-field"><label>' + T.deviceLabel + '</label><div class="mf-input"><select class="js-device spk-dev" aria-label="' + T.deviceLabel + '">' + opts + '</select></div></div>' +
+          '<input class="js-device" type="hidden" value="' + T.device + '">' +
           '<button class="btn btn-spark mf-submit js-submit spk-submit" type="button" disabled>' + T.submit + '</button>' +
           '<p class="mf-note">' + T.note + '</p>' +
           '<div class="mf-trust">' + trust + '</div>' +
@@ -103,47 +93,39 @@
     document.body.appendChild(modal);
 
     var card = modal.querySelector(".modal-card");
-    var nameEl = modal.querySelector(".spk-name"), phone = modal.querySelector(".spk-phone");
-    var hint = modal.querySelector(".spk-hint"), dotsWrap = modal.querySelector(".spk-dots");
-    var dots = dotsWrap.querySelectorAll("i"), dev = modal.querySelector(".spk-dev");
-    var bar = modal.querySelector(".spk-bar"), pct = modal.querySelector(".spk-pct");
+    var phone = modal.querySelector(".spk-phone"), hint = modal.querySelector(".spk-hint");
+    var dotsWrap = modal.querySelector(".spk-dots"), dots = dotsWrap.querySelectorAll("i");
     var submit = modal.querySelector(".spk-submit"), summary = modal.querySelector(".spk-sum");
-    var phoneValid = false;
+    var valid = false;
 
-    function checkPhone() {
-      var d = rawDigits(phone.value); phone.value = fmt(d); var box = phone.closest(".mf-input"); phoneValid = false;
+    function check() {
+      var d = rawDigits(phone.value); phone.value = fmt(d); var box = phone.closest(".mf-input"); valid = false;
       if (d.length === 0) { hint.textContent = T.hint; hint.className = "mf-hint spk-hint"; box.classList.remove("valid", "invalid"); }
       else if (d.length < 10) { hint.textContent = T.hintFull; hint.className = "mf-hint spk-hint"; box.classList.remove("valid", "invalid"); }
-      else { var op = detect(d.slice(1, 3)); if (op) { phoneValid = true; hint.innerHTML = '<span class="mf-op">✓ ' + op + "</span> " + T.hintOk; hint.className = "mf-hint spk-hint ok"; box.classList.add("valid"); box.classList.remove("invalid"); } else { hint.textContent = T.hintErr; hint.className = "mf-hint spk-hint err"; box.classList.add("invalid"); box.classList.remove("valid"); } }
+      else { var op = detect(d.slice(1, 3)); if (op) { valid = true; hint.innerHTML = '<span class="mf-op">✓ ' + op + "</span> " + T.hintOk; hint.className = "mf-hint spk-hint ok"; box.classList.add("valid"); box.classList.remove("invalid"); } else { hint.textContent = T.hintErr; hint.className = "mf-hint spk-hint err"; box.classList.add("invalid"); box.classList.remove("valid"); } }
       for (var i = 0; i < dots.length; i++) { if (i < d.length) dots[i].classList.add("on"); else dots[i].classList.remove("on"); }
-      dotsWrap.classList.remove("valid", "invalid"); if (d.length === 10) dotsWrap.classList.add(phoneValid ? "valid" : "invalid");
-      return d;
+      dotsWrap.classList.remove("valid", "invalid"); if (d.length === 10) dotsWrap.classList.add(valid ? "valid" : "invalid");
+      submit.disabled = !valid;
     }
-    function checkName() { var ok = nameEl.value.trim().length >= 2; nameEl.closest(".mf-input").classList.toggle("valid", ok); return ok; }
-    function update() { var nameOk = checkName(); var d = checkPhone(); var p = Math.round(((nameOk ? 1 : 0) + Math.min(d.length / 10, 1)) / 2 * 100); bar.style.width = p + "%"; pct.textContent = p + "%"; submit.disabled = !(nameOk && phoneValid); }
-    nameEl.addEventListener("input", update); phone.addEventListener("input", update);
+    phone.addEventListener("input", check);
     submit.addEventListener("click", function () {
       if (submit.disabled) return;
-      ls(K_LEAD, "1");                 // больше не показывать; analytics.js поймает этот же клик по .js-submit
-      summary.innerHTML = "<div><span>" + T.sumName + "</span><b>" + esc(nameEl.value.trim()) + "</b></div>" +
-        "<div><span>" + T.sumPhone + "</span><b>+38 " + esc(phone.value) + "</b></div>" +
-        "<div><span>" + T.sumReq + "</span><b>" + esc(dev.value) + "</b></div>";
-      bar.style.width = "100%"; card.classList.add("done");
+      ls(K_LEAD, "1");                 // analytics.js поймает этот же клик по .js-submit
+      summary.innerHTML = "<div><span>" + T.sumPhone + "</span><b>+38 " + esc(phone.value) + "</b></div>";
+      card.classList.add("done");
     });
-
     modal.addEventListener("click", function (e) { if (e.target.closest("[data-spk-close]")) close(); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape" && modal.classList.contains("open")) close(); });
-    update();
-    return nameEl;
+    return phone;
   }
 
   function open() {
     if (shown || suppressed()) return;
     shown = true; ss(K_SEEN, "1");
-    var nameEl = build();
+    var phone = build();
     modal.classList.add("open"); modal.setAttribute("aria-hidden", "false"); document.body.classList.add("modal-open");
     requestAnimationFrame(function () { modal.classList.add("show"); });
-    setTimeout(function () { try { nameEl.focus(); } catch (e) {} }, 360);
+    setTimeout(function () { try { phone.focus(); } catch (e) {} }, 360);
   }
   function close() {
     if (!modal) return;
