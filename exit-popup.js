@@ -1,8 +1,10 @@
 /* SPARK exit-intent popup — компактный: заголовок «Не нашли что искали?» + ОДНО поле телефона
    с «начинкой» основной формы сайта (маска, точки-индикатор, определение оператора).
    Shell/анимация/поведение — как у модалки сайта (.modal / .mf-*). Появляется при попытке уйти.
-   Показ: ≥30с И ≥50% прокрутки И exit-intent. Лимиты: 1/сессия · 7 дней после закрытия · никогда после заявки.
-   Превью без лимитов: ?popup=1. Классы .js-submit/.js-phone/.js-device → лид ловит analytics.js. */
+   Показ: ≥15с И ≥30% прокрутки И exit-intent. Лимиты: 1/сессия · 7 дней после закрытия · никогда после заявки.
+   Превью без лимитов: ?popup=1. Классы .js-submit/.js-phone/.js-device → лид ловит analytics.js
+   (событие generate_lead в dataLayer). Сам попап шлёт в dataLayer: exit_popup_show (с trigger)
+   и exit_popup_close (закрыт без заявки) — воронка настраивается в GTM. */
 (function () {
   "use strict";
   if (window.__sparkExit) return;
@@ -34,8 +36,18 @@
 
   var MIN_MS = 15000, MIN_SCROLL = 0.3, CLOSE_DAYS = 7;
   var K_SEEN = "spark_exit_seen", K_CLOSED = "spark_exit_closed", K_LEAD = "spark_exit_lead";
-  var preview = /[?&]popup=1/.test(location.search);
-  var start = Date.now(), maxScroll = 0, shown = false, armed = false, modal = null;
+  var preview = /[?&]popup=1/.test(location.search);          // мгновенный показ без условий
+  var test = /[?&](popup|test)=1/.test(location.search);       // тест: события с test_mode, флаги не пишем (синхронно с analytics.js)
+  var start = Date.now(), maxScroll = 0, shown = false, armed = false, modal = null, closed = false;
+
+  // событие воронки попапа → dataLayer (GTM подхватит позже; очередь сохраняется)
+  function track(ev, extra) {
+    try {
+      var d = { event: ev, language: lang, test_mode: test };
+      if (extra) for (var k in extra) d[k] = extra[k];
+      (window.dataLayer = window.dataLayer || []).push(d);
+    } catch (e) {}
+  }
 
   function lg(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function ls(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -110,7 +122,7 @@
     phone.addEventListener("input", check);
     submit.addEventListener("click", function () {
       if (submit.disabled) return;
-      if (!preview) ls(K_LEAD, "1");   // analytics.js поймает этот же клик по .js-submit
+      if (!test) ls(K_LEAD, "1");   // analytics.js поймает этот же клик по .js-submit
       summary.innerHTML = "<div><span>" + T.sumPhone + "</span><b>+38 " + esc(phone.value) + "</b></div>";
       card.classList.add("done");
     });
@@ -119,28 +131,32 @@
     return phone;
   }
 
-  function open() {
+  function open(trig) {
     if (shown || suppressed()) return;
-    shown = true; if (!preview) ss(K_SEEN, "1");
+    shown = true; if (!test) ss(K_SEEN, "1");
+    track("exit_popup_show", { trigger: trig || "unknown" });
     var phone = build();
     modal.classList.add("open"); modal.setAttribute("aria-hidden", "false"); document.body.classList.add("modal-open");
     requestAnimationFrame(function () { modal.classList.add("show"); });
     setTimeout(function () { try { phone.focus(); } catch (e) {} }, 360);
   }
   function close() {
-    if (!modal) return;
-    if (!preview && !lg(K_LEAD)) ls(K_CLOSED, String(Date.now()));
+    if (!modal || closed) return;   // guard: двойной Escape/клик в окно фейда не задваивает событие
+    closed = true;
+    var card = modal.querySelector(".modal-card");
+    if (!(card && card.classList.contains("done"))) track("exit_popup_close");
+    if (!test && !lg(K_LEAD)) ls(K_CLOSED, String(Date.now()));
     modal.classList.remove("show"); modal.setAttribute("aria-hidden", "true"); document.body.classList.remove("modal-open");
     setTimeout(function () { modal.classList.remove("open"); }, 300);
   }
 
   // --- триггеры ---
-  if (preview) { setTimeout(open, 600); return; }
+  if (preview) { setTimeout(function () { open("preview"); }, 600); return; }
 
   // ПК: курсор ушёл за верхнюю границу окна (mouseleave надёжнее; mouseout — запасной)
-  document.addEventListener("mouseleave", function (e) { if (e.clientY <= 0 && engaged()) open(); });
+  document.addEventListener("mouseleave", function (e) { if (e.clientY <= 0 && engaged()) open("mouse_top"); });
   document.addEventListener("mouseout", function (e) {
-    if (e.clientY <= 0 && !e.relatedTarget && !e.toElement && engaged()) open();
+    if (e.clientY <= 0 && !e.relatedTarget && !e.toElement && engaged()) open("mouse_top");
   });
 
   var touch = matchMedia("(hover:none)").matches || "ontouchstart" in window;
@@ -155,16 +171,16 @@
     addEventListener("touchend", arm, { passive: true });
     setTimeout(arm, 8200);
     addEventListener("popstate", function () {
-      if (armed && !shown && !suppressed()) { try { history.pushState({ spkExit: 1 }, "", location.href); } catch (e) {} open(); }
+      if (armed && !shown && !suppressed()) { try { history.pushState({ spkExit: 1 }, "", location.href); } catch (e) {} open("back_gesture"); }
     });
     // свернул вкладку / переключился в другое приложение / закрывает — покажем (увидит при возврате)
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "hidden" && engaged() && !shown && !suppressed()) open();
+      if (document.visibilityState === "hidden" && engaged() && !shown && !suppressed()) open("tab_hidden");
     });
     var lastY = scrollY, lastT = Date.now();
     addEventListener("scroll", function () {
       var y = scrollY, t = Date.now(), dt = t - lastT;
-      if (dt > 0 && (lastY - y) / dt > 1.1 && y < 320 && engaged()) open();
+      if (dt > 0 && (lastY - y) / dt > 1.1 && y < 320 && engaged()) open("scroll_up");
       lastY = y; lastT = t;
     }, { passive: true });
   }
