@@ -28,7 +28,7 @@
   function withSettings(cb) {
     try { var c = sessionStorage.getItem("spk_cfg"); if (c) { cb(JSON.parse(c)); return; } } catch (e) {}
     try {
-      fetch(SB.url + "/rest/v1/site_settings?id=eq.1&select=ga4_id,meta_pixel_id,google_ads_id,google_ads_label,gsc_verification",
+      fetch(SB.url + "/rest/v1/site_settings?id=eq.1&select=gtm_id,ga4_id,meta_pixel_id,tiktok_pixel_id,google_ads_id,google_ads_label,gsc_verification",
         { headers: { apikey: SB.anon, Authorization: "Bearer " + SB.anon } })
         .then(function (r) { return r.ok ? r.json() : []; })
         .then(function (a) { var cfg = (a && a[0]) || {}; try { sessionStorage.setItem("spk_cfg", JSON.stringify(cfg)); } catch (e) {} cb(cfg); })
@@ -47,18 +47,28 @@
     !function (f, b, e, v, n, t, s) { if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); }; if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = "2.0"; n.queue = []; t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s); }(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
     fbq("init", id); fbq("track", "PageView");
   }
+  function initGTM(id) {
+    (function (w, d, s, l, i) { w[l] = w[l] || []; w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" }); var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != "dataLayer" ? "&l=" + l : ""; j.async = true; j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl; f.parentNode.insertBefore(j, f); })(window, document, "script", "dataLayer", id);
+  }
+  function initTikTok(id) {
+    !function (w, d, t) { w.TiktokAnalyticsObject = t; var ttq = w[t] = w[t] || []; ttq.methods = ["page", "track", "identify", "instances", "debug", "on", "off", "once", "ready", "alias", "group", "enableCookie", "disableCookie", "holdConsent", "revokeConsent", "grantConsent"]; ttq.setAndDefer = function (t, e) { t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))); }; }; for (var i = 0; i < ttq.methods.length; i++)ttq.setAndDefer(ttq, ttq.methods[i]); ttq.instance = function (t) { for (var e = ttq._i[t] || [], n = 0; n < ttq.methods.length; n++)ttq.setAndDefer(e, ttq.methods[n]); return e; }; ttq.load = function (e, n) { var r = "https://analytics.tiktok.com/i18n/pixel/events.js", o = n && n.partner; ttq._i = ttq._i || {}; ttq._i[e] = [], ttq._i[e]._u = r; ttq._t = ttq._t || {}; ttq._t[e] = +new Date; ttq._o = ttq._o || {}; ttq._o[e] = n || {}; n = document.createElement("script"); n.type = "text/javascript", n.async = !0, n.src = r + "?sdkid=" + e + "&lib=" + t; e = document.getElementsByTagName("script")[0]; e.parentNode.insertBefore(n, e); }; ttq.load(id); ttq.page(); }(window, document, "ttq");
+  }
 
   withSettings(function (cfg) {
+    T.gtm = ok(cfg.gtm_id) ? cfg.gtm_id.trim() : "";
     T.ga4 = ok(cfg.ga4_id) ? cfg.ga4_id.trim() : "";
     T.ads = ok(cfg.google_ads_id) ? cfg.google_ads_id.trim() : "";
     T.label = ok(cfg.google_ads_label) ? cfg.google_ads_label.trim() : "";
     T.px = ok(cfg.meta_pixel_id) ? cfg.meta_pixel_id.trim() : "";
+    T.tt = ok(cfg.tiktok_pixel_id) ? cfg.tiktok_pixel_id.trim() : "";
+    if (T.gtm) initGTM(T.gtm);                 // контейнер сам подтянет generate_lead из dataLayer
     if (T.ga4 || T.ads) {
       loadGtag(T.ga4 || T.ads);
       if (T.ga4) gtag("config", T.ga4, { allow_enhanced_conversions: true });
       if (T.ads) gtag("config", T.ads, { allow_enhanced_conversions: true });
     }
     if (T.px) initPixel(T.px);
+    if (T.tt) initTikTok(T.tt);
     if (ok(cfg.gsc_verification) && !document.querySelector('meta[name="google-site-verification"]')) {
       var m = document.createElement("meta"); m.name = "google-site-verification"; m.content = cfg.gsc_verification.trim(); document.head.appendChild(m);
     }
@@ -107,5 +117,8 @@
       if (am.ph || am.fn) { try { fbq("init", T.px, am); } catch (_) {} }
       fbq("track", "Lead", { content_name: service || "", value: 0, currency: "UAH" }, { eventID: eid });
     }
+
+    // 5) TikTok — событие заявки
+    if (T.tt && window.ttq) { try { ttq.track("SubmitForm", { content_type: "lead", content_name: service || "" }); } catch (_) {} }
   }, true);
 })();
