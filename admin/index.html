@@ -51,6 +51,11 @@
   .view.on{display:block}
 
   /* дашборд */
+  .period{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .pchip{background:#fff;border:1px solid var(--line);color:var(--muted);padding:7px 13px;border-radius:999px;font-size:.85rem}
+  .pchip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .pcustom{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted);margin-left:6px}
+  .pcustom input{width:auto;padding:6px 8px;font-size:.82rem}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
   .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
   .kpi .n{font-size:1.55rem;font-weight:800;line-height:1.1}
@@ -159,6 +164,14 @@
     <!-- ДАШБОРД -->
     <div class="view on" id="view-dash">
       <h1>Дашборд</h1>
+      <div class="period" id="period">
+        <button class="pchip on" data-p="all">Всё время</button>
+        <button class="pchip" data-p="today">Сегодня</button>
+        <button class="pchip" data-p="7d">7 дней</button>
+        <button class="pchip" data-p="30d">30 дней</button>
+        <button class="pchip" data-p="month">Этот месяц</button>
+        <span class="pcustom">с <input type="date" id="pfrom"> по <input type="date" id="pto"></span>
+      </div>
       <div class="kpis" id="kpis"></div>
       <div class="panels" id="panels"></div>
     </div>
@@ -226,6 +239,26 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
   const STAT_RU = { new: "Новая", in_progress: "В работе", done: "Готово", spam: "Спам" };
   const SRC_RU = { exit_popup: "Всплывающее окно", modal_callback: "Кнопка «Записаться»", inline_form: "Форма на странице", unknown: "Форма" };
   let filter = "all", search = "", ALL = [];
+  let period = "all", customFrom = "", customTo = "";
+
+  function inPeriod(r) {
+    const k = dayKey(new Date(r.created_at)), tk = dayKey(new Date()), t = new Date(r.created_at).getTime();
+    if (period === "today") return k === tk;
+    if (period === "month") return k.slice(0, 7) === tk.slice(0, 7);
+    if (period === "7d") return (Date.now() - t) < 7 * 864e5;
+    if (period === "30d") return (Date.now() - t) < 30 * 864e5;
+    if (period === "custom") { if (customFrom && k < customFrom) return false; if (customTo && k > customTo) return false; return true; }
+    return true;
+  }
+  function periodLabel() {
+    return { all: "за всё время", today: "сегодня", "7d": "за 7 дней", "30d": "за 30 дней", month: "за этот месяц",
+      custom: "с " + (customFrom || "…") + " по " + (customTo || "…") }[period] || "";
+  }
+  function daysBetween(from, to) {
+    const out = []; let d = new Date(from + "T12:00:00"), end = new Date(to + "T12:00:00"), g = 0;
+    while (d <= end && g < 400) { out.push(dayKey(d)); d = new Date(d.getTime() + 864e5); g++; }
+    return out.length ? out : [to];
+  }
 
   function esc(s) { return String(s ?? "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c])); }
   function host(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u || ""; } }
@@ -254,11 +287,10 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
 
   // ── дашборд ──
   function renderDash() {
-    const live = ALL.filter(r => r.status !== "spam");
-    const total = ALL.length, todayK = dayKey(new Date()), now = Date.now();
-    const today = ALL.filter(r => dayKey(new Date(r.created_at)) === todayK).length;
-    const week = ALL.filter(r => (now - new Date(r.created_at).getTime()) < 7 * 864e5).length;
-    const cnt = s => ALL.filter(r => r.status === s).length;
+    const scope = ALL.filter(inPeriod), now = Date.now();
+    const live = scope.filter(r => r.status !== "spam");
+    const total = scope.length;
+    const cnt = s => scope.filter(r => r.status === s).length;
     const done = cnt("done"), conv = live.length ? Math.round(done / live.length * 100) : 0;
     const money = n => Math.round(n || 0).toLocaleString("ru-RU") + " ₴";
     const revSum = live.reduce((s, r) => s + (Number(r.revenue) || 0), 0);
@@ -266,9 +298,9 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
     const avg = revCnt ? Math.round(revSum / revCnt) : 0;
 
     $("kpis").innerHTML = [
-      ["Всего заявок", total, ""],
-      ["Сегодня", today, "за неделю: " + week],
+      ["Заявок", total, periodLabel()],
       ["Новые", cnt("new"), "ждут обработки", cnt("new") > 0],
+      ["В работе", cnt("in_progress"), ""],
       ["Готово", done, "конверсия " + conv + "%"],
       ["Доход", money(revSum), revCnt + " с оплатой", true],
       ["Средний чек", money(avg), ""]
@@ -286,17 +318,25 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
     const svMax = Math.max(1, ...svArr.map(x => x[1]));
     const svHtml = svArr.length ? svArr.map(([nm, v]) => `<div class="brow"><span class="nm" title="${esc(nm)}">${esc(nm)}</span><span class="bar"><i style="width:${Math.round(v / svMax * 100)}%"></i></span><span class="v">${v}</span></div>`).join("") : '<div class="muted">нет данных</div>';
 
-    const days = [];
-    for (let i = 13; i >= 0; i--) days.push(dayKey(new Date(now - i * 864e5)));
+    // диапазон дней графика = выбранный период
+    const tk = dayKey(new Date());
+    let cf, ct = tk;
+    if (period === "today") cf = tk;
+    else if (period === "7d") cf = dayKey(new Date(now - 6 * 864e5));
+    else if (period === "30d") cf = dayKey(new Date(now - 29 * 864e5));
+    else if (period === "month") cf = tk.slice(0, 7) + "-01";
+    else if (period === "custom") { cf = customFrom || dayKey(new Date(now - 13 * 864e5)); ct = customTo || tk; }
+    else cf = dayKey(new Date(now - 13 * 864e5));   // всё время -> последние 14 дней
+    const days = daysBetween(cf, ct);
     const dMap = {};
-    ALL.forEach(r => { const k = dayKey(new Date(r.created_at)); dMap[k] = (dMap[k] || 0) + 1; });
+    scope.forEach(r => { const k = dayKey(new Date(r.created_at)); dMap[k] = (dMap[k] || 0) + 1; });
     const dMax = Math.max(1, ...days.map(k => dMap[k] || 0));
     const chartHtml = days.map(k => `<div class="col" title="${k}: ${dMap[k] || 0}" style="height:${Math.round((dMap[k] || 0) / dMax * 100)}%"></div>`).join("");
 
     $("panels").innerHTML =
       `<div class="panel"><h3>Откуда приходят (каналы + доход)</h3>${chHtml}</div>
        <div class="panel"><h3>Топ услуг</h3>${svHtml}</div>
-       <div class="panel"><h3>Заявки за 14 дней</h3><div class="chart">${chartHtml}</div><div class="chart-x"><span>${days[0].slice(5)}</span><span>сегодня</span></div></div>`;
+       <div class="panel"><h3>Заявки по дням</h3><div class="chart">${chartHtml}</div><div class="chart-x"><span>${days[0].slice(5)}</span><span>${days[days.length - 1].slice(5)}</span></div></div>`;
   }
 
   // ── таблица лидов ──
@@ -423,6 +463,21 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
   $("refresh").addEventListener("click", fetchAll);
   $("filters").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (!b) return; filter = b.dataset.f; document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c === b)); renderTable(); });
   $("search").addEventListener("input", (e) => { search = e.target.value.trim(); renderTable(); });
+
+  // фильтр по датам (дашборд)
+  $("period").addEventListener("click", (e) => {
+    const b = e.target.closest(".pchip"); if (!b) return;
+    period = b.dataset.p; customFrom = ""; customTo = ""; $("pfrom").value = ""; $("pto").value = "";
+    document.querySelectorAll(".pchip").forEach(c => c.classList.toggle("on", c === b));
+    renderDash();
+  });
+  function customChanged() {
+    customFrom = $("pfrom").value; customTo = $("pto").value;
+    if (customFrom || customTo) { period = "custom"; document.querySelectorAll(".pchip").forEach(c => c.classList.remove("on")); }
+    renderDash();
+  }
+  $("pfrom").addEventListener("change", customChanged);
+  $("pto").addEventListener("change", customChanged);
 
   setInterval(() => {
     if (!$("autochk").checked || !$("app").classList.contains("on")) return;
