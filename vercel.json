@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "trailingSlash": true,
+  "cleanUrls": false,
+  "redirects": [
+    { "source": "/iphone_11", "destination": "/remont-iphone/iphone-11/", "permanent": true },
+    { "source": "/iphone_11/", "destination": "/remont-iphone/iphone-11/", "permanent": true },
+    { "source": "/zamena-batarei-iphone", "destination": "/remont-iphone/", "permanent": true },
+    { "source": "/zamena-batarei-iphone/", "destination": "/remont-iphone/", "permanent": true }
+  ]
+}

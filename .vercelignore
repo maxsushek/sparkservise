@@ -1,0 +1,6 @@
+# не деплоить на Vercel (служебное, не для публики)
+_build
+supabase
+.claude
+.github
+*.md
