@@ -19,7 +19,7 @@
   header{background:var(--ink);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
   header b{font-size:1.05rem;letter-spacing:.02em}
   header .sp{color:var(--spark)}
-  .wrap{max-width:1100px;margin:0 auto;padding:20px}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px}
   .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px}
   .login{max-width:360px;margin:8vh auto}
   .login h1{font-size:1.15rem;margin:0 0 4px}
@@ -31,33 +31,63 @@
   .btn{background:var(--spark);color:#fff;padding:12px 18px;width:100%;margin-top:16px}
   .btn.line{background:#fff;color:var(--ink);border:1px solid var(--line);width:auto;padding:8px 14px;margin:0}
   .err{color:var(--spark);font-size:.85rem;margin-top:10px;min-height:1em}
-  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+
+  /* дашборд */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:14px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .kpi .n{font-size:1.55rem;font-weight:800;line-height:1.1}
+  .kpi .l{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:3px}
+  .kpi .s{font-size:.74rem;color:var(--muted);margin-top:2px}
+  .kpi.accent .n{color:var(--spark)}
+  .panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:18px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+  .panel h3{margin:0 0 11px;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .brow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:.86rem}
+  .brow .bar{flex:1;height:8px;background:var(--bg);border-radius:99px;overflow:hidden}
+  .brow .bar i{display:block;height:100%;border-radius:99px;background:var(--spark)}
+  .brow .v{min-width:26px;text-align:right;font-weight:700;color:var(--muted);font-size:.82rem}
+  .brow .nm{min-width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chart{display:flex;align-items:flex-end;gap:3px;height:70px;margin-top:4px}
+  .chart .col{flex:1;background:var(--spark);opacity:.85;border-radius:3px 3px 0 0;min-height:2px}
+  .chart .col:hover{opacity:1}
+  .chart-x{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-top:5px}
+
+  /* панель управления */
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
   .filters{display:flex;gap:6px;flex-wrap:wrap}
   .chip{background:#fff;border:1px solid var(--line);color:var(--muted);padding:6px 12px;border-radius:999px;font-size:.84rem}
   .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  #search{width:230px;padding:8px 12px}
+  .count{font-size:.85rem;color:var(--muted)}
+  .auto{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted)}
+  .auto input{width:auto}
+
+  /* таблица */
   .tablewrap{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:760px}
-  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:820px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
   th{font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-  td .phone{font-weight:700;white-space:nowrap}
-  td .when{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .when{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;font-size:.82rem}
+  .nm-b{font-weight:700}
+  .phone{font-weight:700;white-space:nowrap}
+  .act{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+  .act a{font-size:.72rem;text-decoration:none;padding:3px 8px;border-radius:6px;border:1px solid var(--line);color:var(--ink);white-space:nowrap;font-weight:600}
+  .act a.call{background:#DCFCE7;border-color:#bbf7d0;color:#166534}
+  .act a.wa{background:#DCFCE7;border-color:#bbf7d0;color:#166534}
+  .act a.vb{background:#EDE9FE;border-color:#ddd6fe;color:#5B21B6}
+  .dup{display:inline-block;font-size:.68rem;font-weight:700;background:#FEF3C7;color:#92400E;border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:middle}
   select.status{padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:.85rem;font-weight:600}
   .s-new{color:#B45309}.s-in_progress{color:#1D4ED8}.s-done{color:#15803D}.s-spam{color:#9CA3AF}
-  .src{display:inline-block;font-size:.74rem;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:var(--muted)}
   .muted{color:var(--muted)}
   .ch{display:inline-block;font-size:.76rem;font-weight:700;border-radius:6px;padding:3px 8px;white-space:nowrap}
-  .ch-ads{background:#FEF3C7;color:#92400E}       /* Google Ads / платная реклама */
-  .ch-seo{background:#DCFCE7;color:#166534}       /* поиск / органика */
-  .ch-social{background:#EDE9FE;color:#5B21B6}    /* соцсети */
-  .ch-email{background:#FFEDD5;color:#9A3412}     /* email */
-  .ch-ref{background:#CCFBF1;color:#115E59}       /* переход с сайта */
-  .ch-utm{background:#E0E7FF;color:#3730A3}       /* кампания с меткой */
-  .ch-direct{background:#F1F5F9;color:#475569}    /* прямой заход */
-  .ch-note{display:block;font-size:.72rem;color:var(--muted);margin-top:3px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  td .page{font-size:.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+  .ch-ads{background:#FEF3C7;color:#92400E}.ch-seo{background:#DCFCE7;color:#166534}
+  .ch-social{background:#EDE9FE;color:#5B21B6}.ch-email{background:#FFEDD5;color:#9A3412}
+  .ch-ref{background:#CCFBF1;color:#115E59}.ch-utm{background:#E0E7FF;color:#3730A3}
+  .ch-direct{background:#F1F5F9;color:#475569}
+  .ch-note{display:block;font-size:.72rem;color:var(--muted);margin-top:3px;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .note-inp{width:150px;padding:6px 8px;font-size:.82rem}
   .empty{text-align:center;color:var(--muted);padding:40px}
-  .count{font-size:.85rem;color:var(--muted)}
-  tr.hl td{background:#FEF9C3;transition:background 1.2s}   /* подсветка лида из ссылки CRM */
+  tr.hl td{background:#FEF9C3;transition:background 1.2s}
 </style>
 </head>
 <body>
@@ -78,8 +108,11 @@
     </form>
   </div>
 
-  <!-- СПИСОК -->
+  <!-- РАБОЧАЯ ОБЛАСТЬ -->
   <div id="listView" style="display:none">
+    <div class="kpis" id="kpis"></div>
+    <div class="panels" id="panels"></div>
+
     <div class="bar">
       <div class="filters" id="filters">
         <button class="chip on" data-f="all">Все</button>
@@ -88,14 +121,17 @@
         <button class="chip" data-f="done">Готово</button>
         <button class="chip" data-f="spam">Спам</button>
       </div>
-      <div style="display:flex;gap:10px;align-items:center">
+      <input id="search" placeholder="Поиск по телефону или имени…">
+      <div style="display:flex;gap:12px;align-items:center">
         <span class="count" id="count"></span>
+        <label class="auto"><input type="checkbox" id="autochk" checked> авто</label>
         <button class="btn line" id="refresh">Обновить</button>
       </div>
     </div>
+
     <div class="card tablewrap">
       <table>
-        <thead><tr><th>Дата</th><th>Телефон</th><th>Имя</th><th>Услуга</th><th>Канал</th><th>Страница</th><th>Статус</th></tr></thead>
+        <thead><tr><th>Дата</th><th>Контакт</th><th>Услуга</th><th>Канал / страница</th><th>Заметка</th><th>Статус</th></tr></thead>
         <tbody id="rows"></tbody>
       </table>
       <div class="empty" id="empty" style="display:none">Заявок пока нет.</div>
@@ -103,7 +139,7 @@
   </div>
 
   <div id="bootErr" class="card" style="display:none">
-    <b>Не настроено.</b> Впишите <code>url</code> и <code>anonKey</code> в <code>window.SB_CFG</code> вверху этого файла.
+    <b>Не настроено.</b> Впишите <code>url</code> и <code>anonKey</code> в <code>window.SB_CFG</code>.
   </div>
 </div>
 
@@ -119,60 +155,169 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
   const loginView = $("loginView"), listView = $("listView"), logout = $("logout");
   const STAT = ["new", "in_progress", "done", "spam"];
   const STAT_RU = { new: "Новая", in_progress: "В работе", done: "Готово", spam: "Спам" };
-  const SRC_RU = { exit_popup: "Exit-попап", modal_callback: "Модалка", inline_form: "Форма", unknown: "Форма" };
-  let filter = "all";
+  const SRC_RU = { exit_popup: "Всплывающее окно", modal_callback: "Кнопка «Записаться»", inline_form: "Форма на странице", unknown: "Форма" };
+  let filter = "all", search = "", ALL = [];
 
-  function fmt(iso) {
-    try {
-      return new Intl.DateTimeFormat("ru-UA", { timeZone: "Europe/Kyiv",
-        day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
-    } catch { return iso; }
-  }
-  function esc(s) { return String(s ?? "").replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])); }
+  function esc(s) { return String(s ?? "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c])); }
   function host(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u || ""; } }
   const has = (s, arr) => arr.some(x => s.indexOf(x) > -1);
+  function fmt(iso) {
+    try { return new Intl.DateTimeFormat("ru-UA", { timeZone: "Europe/Kyiv", day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)); }
+    catch { return iso; }
+  }
+  const dayKey = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Kyiv" }).format(d);   // YYYY-MM-DD
+  function digits(p) { return String(p || "").replace(/\D/g, ""); }
+  function e164(p) { let d = digits(p); if (d.startsWith("380")) return "+" + d; if (d.startsWith("0")) return "+38" + d; if (d.length === 9) return "+380" + d; return "+" + d; }
 
-  // человекочитаемый канал трафика из UTM + gclid/fbclid + реферера
   function channelOf(r) {
-    const u = r.utm || {}, src = (u.source || "").toLowerCase(), med = (u.medium || "").toLowerCase(),
-          ref = (r.referrer || "").toLowerCase();
+    const u = r.utm || {}, src = (u.source || "").toLowerCase(), med = (u.medium || "").toLowerCase(), ref = (r.referrer || "").toLowerCase();
     const camp = u.campaign ? " · " + u.campaign : "";
-    if (u.gclid || med === "cpc" || med === "ppc" || has(med, ["paid"]) || (src === "google" && has(med, ["cpc", "ad"])))
-      return { t: "Google Ads", c: "ads", d: "платная реклама Google" + camp };
-    if (u.fbclid || (has(src, ["facebook", "instagram", "fb", "ig", "meta"]) && (med === "cpc" || has(med, ["paid", "social"]))))
-      return { t: "Реклама в соцсетях", c: "ads", d: (src || "Meta") + camp };
-    if (med === "email" || src === "email") return { t: "Email-рассылка", c: "email", d: (u.campaign || "рассылка") };
-    if (has(src, ["facebook", "instagram", "tiktok", "youtube", "telegram", "t.me"]) || has(med, ["social"]))
-      return { t: "Соцсети", c: "social", d: (src || "соцсеть") + camp };
+    if (u.gclid || med === "cpc" || med === "ppc" || has(med, ["paid"]) || (src === "google" && has(med, ["cpc", "ad"]))) return { t: "Google Ads", c: "ads", d: "платная реклама Google" + camp };
+    if (u.fbclid || (has(src, ["facebook", "instagram", "fb", "ig", "meta"]) && (med === "cpc" || has(med, ["paid", "social"])))) return { t: "Реклама в соцсетях", c: "ads", d: (src || "Meta") + camp };
+    if (med === "email" || src === "email") return { t: "Email", c: "email", d: (u.campaign || "рассылка") };
+    if (has(src, ["facebook", "instagram", "tiktok", "youtube", "telegram", "t.me"]) || has(med, ["social"])) return { t: "Соцсети", c: "social", d: (src || "соцсеть") + camp };
     if (has(med, ["organic"])) return { t: "Поиск (SEO)", c: "seo", d: (src || "органический поиск") };
-    if (src || med) return { t: "Кампания с меткой", c: "utm", d: (src || "?") + " / " + (med || "?") + camp };
-    // без UTM — определяем по рефереру
+    if (src || med) return { t: "Кампания", c: "utm", d: (src || "?") + " / " + (med || "?") + camp };
     if (!ref) return { t: "Прямой заход", c: "direct", d: "набрал адрес / закладка / мессенджер" };
-    if (has(ref, ["google.", "bing.", "yahoo", "duckduckgo", "yandex"]))
-      return { t: "Поиск (SEO)", c: "seo", d: "органический переход из поиска" };
-    if (has(ref, ["facebook.", "instagram.", "t.co", "twitter", "x.com", "tiktok", "youtube.", "t.me"]))
-      return { t: "Соцсети", c: "social", d: "переход из соцсети" };
-    if (has(ref, ["sparkservice", "maxsushek.github.io"]))
-      return { t: "Прямой заход", c: "direct", d: "внутренний переход по сайту" };
+    if (has(ref, ["google.", "bing.", "yahoo", "duckduckgo", "yandex"])) return { t: "Поиск (SEO)", c: "seo", d: "органический переход из поиска" };
+    if (has(ref, ["facebook.", "instagram.", "t.co", "twitter", "x.com", "tiktok", "youtube.", "t.me"])) return { t: "Соцсети", c: "social", d: "переход из соцсети" };
+    if (has(ref, ["sparkservice", "maxsushek.github.io"])) return { t: "Прямой заход", c: "direct", d: "внутренний переход по сайту" };
     return { t: "Переход с сайта", c: "ref", d: host(r.referrer) };
+  }
+
+  // ── дашборд ──
+  function renderDash() {
+    const live = ALL.filter(r => r.status !== "spam");   // без спама
+    const total = ALL.length, todayK = dayKey(new Date());
+    const now = Date.now();
+    const today = ALL.filter(r => dayKey(new Date(r.created_at)) === todayK).length;
+    const week = ALL.filter(r => (now - new Date(r.created_at).getTime()) < 7 * 864e5).length;
+    const cnt = s => ALL.filter(r => r.status === s).length;
+    const done = cnt("done");
+    const conv = live.length ? Math.round(done / live.length * 100) : 0;
+
+    $("kpis").innerHTML = [
+      ["Всего заявок", total, ""],
+      ["Сегодня", today, "за неделю: " + week],
+      ["Новые", cnt("new"), "ждут обработки", cnt("new") > 0],
+      ["В работе", cnt("in_progress"), ""],
+      ["Готово", done, "конверсия " + conv + "%"],
+      ["Спам", cnt("spam"), ""]
+    ].map(([l, n, s, acc]) => `<div class="kpi${acc ? " accent" : ""}"><div class="n">${n}</div><div class="l">${l}</div>${s ? `<div class="s">${s}</div>` : ""}</div>`).join("");
+
+    // разбивка по каналам
+    const chMap = {};
+    live.forEach(r => { const t = channelOf(r).t; chMap[t] = (chMap[t] || 0) + 1; });
+    const chArr = Object.entries(chMap).sort((a, b) => b[1] - a[1]);
+    const chMax = Math.max(1, ...chArr.map(x => x[1]));
+    const chHtml = chArr.length ? chArr.map(([nm, v]) =>
+      `<div class="brow"><span class="nm" title="${esc(nm)}">${esc(nm)}</span><span class="bar"><i style="width:${Math.round(v / chMax * 100)}%"></i></span><span class="v">${v}</span></div>`).join("") : '<div class="muted">нет данных</div>';
+
+    // топ услуг
+    const svMap = {};
+    live.forEach(r => { if (r.service) { const s = r.service.trim(); svMap[s] = (svMap[s] || 0) + 1; } });
+    const svArr = Object.entries(svMap).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    const svMax = Math.max(1, ...svArr.map(x => x[1]));
+    const svHtml = svArr.length ? svArr.map(([nm, v]) =>
+      `<div class="brow"><span class="nm" title="${esc(nm)}">${esc(nm)}</span><span class="bar"><i style="width:${Math.round(v / svMax * 100)}%"></i></span><span class="v">${v}</span></div>`).join("") : '<div class="muted">нет данных</div>';
+
+    // график за 14 дней
+    const days = [];
+    for (let i = 13; i >= 0; i--) { const d = new Date(now - i * 864e5); days.push(dayKey(d)); }
+    const dMap = {};
+    ALL.forEach(r => { const k = dayKey(new Date(r.created_at)); dMap[k] = (dMap[k] || 0) + 1; });
+    const dMax = Math.max(1, ...days.map(k => dMap[k] || 0));
+    const chartHtml = days.map(k => `<div class="col" title="${k}: ${dMap[k] || 0}" style="height:${Math.round((dMap[k] || 0) / dMax * 100)}%"></div>`).join("");
+
+    $("panels").innerHTML =
+      `<div class="panel"><h3>Откуда приходят (каналы)</h3>${chHtml}</div>
+       <div class="panel"><h3>Топ услуг</h3>${svHtml}</div>
+       <div class="panel"><h3>Заявки за 14 дней</h3><div class="chart">${chartHtml}</div>
+         <div class="chart-x"><span>${days[0].slice(5)}</span><span>сегодня</span></div></div>`;
+  }
+
+  // ── таблица ──
+  function renderTable() {
+    // подсчёт дублей телефонов
+    const dupCount = {};
+    ALL.forEach(r => { const d = digits(r.phone); if (d) dupCount[d] = (dupCount[d] || 0) + 1; });
+
+    let list = ALL;
+    if (filter !== "all") list = list.filter(r => r.status === filter);
+    if (search) { const q = search.toLowerCase(); list = list.filter(r => (r.phone || "").toLowerCase().includes(q) || (r.name || "").toLowerCase().includes(q)); }
+
+    $("count").textContent = list.length + " из " + ALL.length;
+    const rows = $("rows"), empty = $("empty");
+    empty.style.display = list.length ? "none" : "block";
+
+    rows.innerHTML = list.map(r => {
+      const opts = STAT.map(s => `<option value="${s}"${s === r.status ? " selected" : ""}>${STAT_RU[s]}</option>`).join("");
+      const ch = channelOf(r), u = r.utm || {};
+      const tel = e164(r.phone), wa = digits(tel);
+      const dup = dupCount[digits(r.phone)] > 1;
+      const tip = ["Форма: " + (SRC_RU[r.source] || r.source),
+        u.source ? "utm_source: " + u.source : "", u.medium ? "utm_medium: " + u.medium : "",
+        u.campaign ? "utm_campaign: " + u.campaign : "", u.gclid ? "gclid: " + u.gclid : "", u.fbclid ? "fbclid: " + u.fbclid : "",
+        r.referrer ? "referrer: " + r.referrer : "", u.landing ? "вход: " + u.landing : "",
+        u.device ? "устройство: " + u.device + (u.browser ? ", " + u.browser : "") + (u.os ? " (" + u.os + ")" : "") : "",
+        u.blang ? "язык браузера: " + u.blang : "", "язык сайта: " + (r.lang || "ru")].filter(Boolean).join("\n");
+      const page = r.page_url || u.landing || "";
+      return `<tr data-lead="${r.id}">
+        <td class="when">${fmt(r.created_at)}</td>
+        <td>
+          <div class="nm-b">${r.name ? esc(r.name) : '<span class="muted">Без имени</span>'}${dup ? '<span class="dup">повтор</span>' : ''}</div>
+          <div class="phone">${esc(r.phone)}</div>
+          <div class="act">
+            <a class="call" href="tel:${esc(tel)}">📞 Позвонить</a>
+            <a class="wa" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>
+            <a class="vb" href="viber://chat?number=${encodeURIComponent(tel)}">Viber</a>
+          </div>
+        </td>
+        <td>${r.service ? esc(r.service) : '<span class="muted">—</span>'}<div class="ch-note">${SRC_RU[r.source] || esc(r.source)}${r.lang ? ' · ' + esc(r.lang) : ''}</div></td>
+        <td title="${esc(tip)}"><span class="ch ch-${ch.c}">${esc(ch.t)}</span><span class="ch-note">${esc(ch.d)}</span><span class="ch-note" title="${esc(page)}">${page ? esc(page) : ''}</span></td>
+        <td><input class="note-inp" data-id="${r.id}" value="${esc(r.note || '')}" placeholder="заметка…"></td>
+        <td><select class="status s-${r.status}" data-id="${r.id}">${opts}</select></td>
+      </tr>`;
+    }).join("");
+
+    rows.querySelectorAll("select.status").forEach(sel => sel.addEventListener("change", async () => {
+      const { error } = await sb.from("leads").update({ status: sel.value }).eq("id", sel.dataset.id);
+      if (error) { alert("Не удалось обновить статус: " + error.message); return; }
+      sel.className = "status s-" + sel.value;
+      const r = ALL.find(x => x.id === sel.dataset.id); if (r) r.status = sel.value;
+      renderDash();
+    }));
+    rows.querySelectorAll(".note-inp").forEach(inp => inp.addEventListener("change", async () => {
+      const { error } = await sb.from("leads").update({ note: inp.value || null }).eq("id", inp.dataset.id);
+      if (error) { alert("Не удалось сохранить заметку: " + error.message); return; }
+      const r = ALL.find(x => x.id === inp.dataset.id); if (r) r.note = inp.value;
+      inp.style.borderColor = "#15803D"; setTimeout(() => inp.style.borderColor = "", 900);
+    }));
+
+    const target = new URLSearchParams(location.search).get("lead");
+    if (target) { const tr = rows.querySelector('tr[data-lead="' + target + '"]'); if (tr) { tr.classList.add("hl"); tr.scrollIntoView({ block: "center" }); } }
+  }
+
+  function render() { renderDash(); renderTable(); }
+
+  async function fetchAll() {
+    const { data, error } = await sb.from("leads").select("*").order("created_at", { ascending: false }).limit(2000);
+    if (error) { $("empty").style.display = "block"; $("empty").textContent = "Ошибка загрузки: " + error.message; return; }
+    ALL = data || []; render();
   }
 
   async function showAuth() {
     const { data } = await sb.auth.getSession();
     if (data.session) {
       loginView.style.display = "none"; logout.style.display = "inline-block";
-      // доступ к заявкам — только у email из allowlist (проверяем на стороне БД)
       const { data: ok } = await sb.rpc("is_admin");
-      if (ok) { listView.style.display = "block"; load(); }
+      if (ok) { listView.style.display = "block"; fetchAll(); }
       else {
-        listView.style.display = "none";
-        $("bootErr").style.display = "block";
+        listView.style.display = "none"; $("bootErr").style.display = "block";
         $("bootErr").innerHTML = "<b>Нет доступа.</b> Этот email не в списке администраторов. <button class='btn line' id='logout2'>Выйти</button>";
         $("logout2").addEventListener("click", async () => { await sb.auth.signOut(); location.reload(); });
       }
-    } else {
-      loginView.style.display = "block"; listView.style.display = "none"; logout.style.display = "none";
-    }
+    } else { loginView.style.display = "block"; listView.style.display = "none"; logout.style.display = "none"; }
   }
 
   $("loginForm").addEventListener("submit", async (e) => {
@@ -182,62 +327,22 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
     else showAuth();
   });
   logout.addEventListener("click", async () => { await sb.auth.signOut(); showAuth(); });
-  $("refresh").addEventListener("click", load);
+  $("refresh").addEventListener("click", fetchAll);
   $("filters").addEventListener("click", (e) => {
     const b = e.target.closest(".chip"); if (!b) return;
     filter = b.dataset.f;
     document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c === b));
-    load();
+    renderTable();
   });
+  $("search").addEventListener("input", (e) => { search = e.target.value.trim(); renderTable(); });
 
-  async function load() {
-    let q = sb.from("leads").select("*").order("created_at", { ascending: false }).limit(500);
-    if (filter !== "all") q = q.eq("status", filter);
-    const { data, error } = await q;
-    const rows = $("rows"), empty = $("empty");
-    if (error) { rows.innerHTML = ""; empty.style.display = "block"; empty.textContent = "Ошибка загрузки: " + error.message; return; }
-    $("count").textContent = data.length + " заявок";
-    empty.style.display = data.length ? "none" : "block";
-    empty.textContent = "Заявок пока нет.";
-    rows.innerHTML = data.map(r => {
-      const opts = STAT.map(s => `<option value="${s}"${s === r.status ? " selected" : ""}>${STAT_RU[s]}</option>`).join("");
-      const ch = channelOf(r);
-      const u = r.utm || {};
-      // полные детали в подсказке при наведении
-      const tip = ["Форма: " + (SRC_RU[r.source] || r.source),
-        u.source ? "utm_source: " + u.source : "", u.medium ? "utm_medium: " + u.medium : "",
-        u.campaign ? "utm_campaign: " + u.campaign : "", u.gclid ? "gclid: " + u.gclid : "",
-        u.fbclid ? "fbclid: " + u.fbclid : "", r.referrer ? "referrer: " + r.referrer : "",
-        u.landing ? "вход: " + u.landing : "",
-        u.device ? "устройство: " + u.device + (u.browser ? ", " + u.browser : "") + (u.os ? " (" + u.os + ")" : "") : "",
-        u.blang ? "язык браузера: " + u.blang : "",
-        "язык сайта: " + (r.lang || "ru")].filter(Boolean).join("\n");
-      const page = r.page_url || (u.landing || "");
-      return `<tr data-lead="${r.id}">
-        <td class="when">${fmt(r.created_at)}</td>
-        <td><span class="phone">${esc(r.phone)}</span></td>
-        <td>${r.name ? esc(r.name) : '<span class="muted">—</span>'}</td>
-        <td>${r.service ? esc(r.service) : '<span class="muted">—</span>'}</td>
-        <td title="${esc(tip)}"><span class="ch ch-${ch.c}">${esc(ch.t)}</span><span class="ch-note">${esc(ch.d)}</span></td>
-        <td><span class="page" title="${esc(page)}">${page ? esc(page) : '<span class="muted">—</span>'}</span><span class="ch-note">${SRC_RU[r.source] || esc(r.source)}${r.lang ? ' · ' + esc(r.lang) : ''}</span></td>
-        <td><select class="status s-${r.status}" data-id="${r.id}">${opts}</select></td>
-      </tr>`;
-    }).join("");
-    rows.querySelectorAll("select.status").forEach(sel => {
-      sel.addEventListener("change", async () => {
-        const { error } = await sb.from("leads").update({ status: sel.value }).eq("id", sel.dataset.id);
-        if (error) { alert("Не удалось обновить статус: " + error.message); return; }
-        sel.className = "status s-" + sel.value;
-        if (filter !== "all" && filter !== sel.value) load();
-      });
-    });
-    // прямая ссылка из Telegram: ?lead=<id> -> подсветить и прокрутить к заявке
-    const target = new URLSearchParams(location.search).get("lead");
-    if (target) {
-      const tr = rows.querySelector('tr[data-lead="' + target + '"]');
-      if (tr) { tr.classList.add("hl"); tr.scrollIntoView({ block: "center" }); }
-    }
-  }
+  // автообновление раз в 30 сек (не мешаем, если пользователь печатает заметку)
+  setInterval(() => {
+    if (!$("autochk").checked) return;
+    const a = document.activeElement;
+    if (a && (a.classList.contains("note-inp") || a.id === "search")) return;
+    fetchAll();
+  }, 30000);
 
   showAuth();
 }
