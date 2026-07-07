@@ -170,7 +170,6 @@ FOOTER = '''<footer class="site" id="footer">
     </div>
     <div class="copyr">
       <span>© 2026 SPARK · Сервисный центр Apple в Одессе</span>
-      <span>Прототип нового сайта</span>
     </div>
   </div>
 </footer>
