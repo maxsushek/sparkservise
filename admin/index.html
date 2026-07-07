@@ -208,7 +208,10 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
         u.source ? "utm_source: " + u.source : "", u.medium ? "utm_medium: " + u.medium : "",
         u.campaign ? "utm_campaign: " + u.campaign : "", u.gclid ? "gclid: " + u.gclid : "",
         u.fbclid ? "fbclid: " + u.fbclid : "", r.referrer ? "referrer: " + r.referrer : "",
-        u.landing ? "вход: " + u.landing : ""].filter(Boolean).join("\n");
+        u.landing ? "вход: " + u.landing : "",
+        u.device ? "устройство: " + u.device + (u.browser ? ", " + u.browser : "") + (u.os ? " (" + u.os + ")" : "") : "",
+        u.blang ? "язык браузера: " + u.blang : "",
+        "язык сайта: " + (r.lang || "ru")].filter(Boolean).join("\n");
       const page = r.page_url || (u.landing || "");
       return `<tr data-lead="${r.id}">
         <td class="when">${fmt(r.created_at)}</td>

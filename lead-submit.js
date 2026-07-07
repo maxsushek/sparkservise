@@ -84,14 +84,22 @@
       : (box.id === "bookFormInline" ? "inline_form" : "unknown"));
 
     var attr = firstTouch();
+    // устройство/браузер/язык браузера — из текущего клиента (не first-touch), в тот же utm-объект
+    var ua = navigator.userAgent || "";
+    var u = (attr.utm && typeof attr.utm === "object") ? attr.utm : {};
+    u.device = /iPad|Tablet/i.test(ua) ? "Планшет" : (/Mobi|Android|iPhone|iPod/i.test(ua) ? "Мобильный" : "Компьютер");
+    u.browser = /Edg\//.test(ua) ? "Edge" : (/OPR\/|Opera/.test(ua) ? "Opera" : (/Chrome\//.test(ua) && !/Chromium/.test(ua) ? "Chrome" : (/Firefox\//.test(ua) ? "Firefox" : (/Version\/[\d.]+.*Safari/.test(ua) ? "Safari" : ""))));
+    u.os = /Windows/.test(ua) ? "Windows" : (/Android/.test(ua) ? "Android" : (/iPhone|iPad|iPod/.test(ua) ? "iOS" : (/Mac OS X/.test(ua) ? "macOS" : (/Linux/.test(ua) ? "Linux" : ""))));
+    try { if (navigator.language) u.blang = navigator.language.slice(0, 12); } catch (e) {}
+
     var row = {
       name: (val(box, ".js-name") || val(box, "#mName")) || null,
       phone: phone.slice(0, 32),
       service: (val(box, ".js-device") || val(box, "#mDevice")) || null,
       source: source,
       page_url: location.pathname.slice(0, 500),   // страница, где отправили заявку
-      lang: (document.documentElement.lang || "ru").toLowerCase().indexOf("uk") === 0 ? "uk" : "ru",
-      utm: (attr.utm && Object.keys(attr.utm).length) ? attr.utm : null,   // источник + gclid/fbclid + landing
+      lang: (document.documentElement.lang || "ru").toLowerCase().indexOf("uk") === 0 ? "uk" : "ru",  // язык версии сайта
+      utm: Object.keys(u).length ? u : null,   // источник + gclid/fbclid + landing + устройство/браузер/язык
       referrer: attr.referrer || null
     };
 
