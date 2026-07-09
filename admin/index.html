@@ -101,6 +101,7 @@
   .ch-ads{background:#FEF3C7;color:#92400E}.ch-seo{background:#DCFCE7;color:#166534}
   .ch-social{background:#EDE9FE;color:#5B21B6}.ch-email{background:#FFEDD5;color:#9A3412}
   .ch-ref{background:#CCFBF1;color:#115E59}.ch-utm{background:#E0E7FF;color:#3730A3}.ch-direct{background:#F1F5F9;color:#475569}
+  .ch-maps{background:#FEE2E2;color:#B91C1C}
   .ch-note{display:block;font-size:.72rem;color:var(--muted);margin-top:3px;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .rev-inp{width:88px;padding:6px 8px;font-size:.85rem;font-weight:700;text-align:right}
   .note-inp{width:150px;padding:6px 8px;font-size:.82rem}
@@ -276,6 +277,7 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
     if (has(src, ["tiktok"]) || has(ref, ["tiktok"])) return { t: "TikTok", c: "social", d: (src || "tiktok") + camp };
     if (med === "email" || src === "email") return { t: "Email", c: "email", d: (u.campaign || "рассылка") };
     if (has(src, ["facebook", "instagram", "youtube", "telegram", "t.me"]) || has(med, ["social"])) return { t: "Соцсети", c: "social", d: (src || "соцсеть") + camp };
+    if (has(src, ["google-maps", "google_maps", "googlemaps", "gmb", "gbp"])) return { t: "Google Maps", c: "maps", d: "профиль Google (карты)" + camp };
     if (has(med, ["organic"])) return { t: "Поиск (SEO)", c: "seo", d: (src || "органический поиск") };
     if (src || med) return { t: "Кампания", c: "utm", d: (src || "?") + " / " + (med || "?") + camp };
     if (!ref) return { t: "Прямой заход", c: "direct", d: "набрал адрес / закладка / мессенджер" };
