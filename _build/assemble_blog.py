@@ -63,6 +63,7 @@ def resolve(target):
     if t == "home": return "../../"
     if t == "blog": return "../../blog/"
     if t == "remont-iphone-17-pro-max": return "../../remont-iphone/iphone-17-pro-max/"
+    if t == "zamena-akkumulyatora": return "../../remont-iphone/zamena-akkumulyatora/"
     if t in SLUGS: return "../" + t + "/"
     return "../../" + t + "/"
 

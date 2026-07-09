@@ -895,22 +895,22 @@
     },
     {
       "source": "/zamena-batarei-iphone",
-      "destination": "/remont-iphone/",
+      "destination": "/remont-iphone/zamena-akkumulyatora/",
       "permanent": true
     },
     {
       "source": "/zamena-batarei-iphone/",
-      "destination": "/remont-iphone/",
+      "destination": "/remont-iphone/zamena-akkumulyatora/",
       "permanent": true
     },
     {
       "source": "/zamena-battery",
-      "destination": "/remont-iphone/",
+      "destination": "/remont-iphone/zamena-akkumulyatora/",
       "permanent": true
     },
     {
       "source": "/zamena-battery/",
-      "destination": "/remont-iphone/",
+      "destination": "/remont-iphone/zamena-akkumulyatora/",
       "permanent": true
     },
     {

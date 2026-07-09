@@ -188,7 +188,8 @@ def render(tid):
     for key, label_t, t in SVC_META:
         if key not in pr: continue
         label = label_t.replace("__PORT__", port)
-        rows.append(f'<tr><td class="svc-name">{label}</td><td class="pr">{rng(pr[key])}</td><td class="time">{t}</td></tr>')
+        cell = f'<a href="../zamena-akkumulyatora/">{label}</a>' if key == "Замена аккумулятора" else label
+        rows.append(f'<tr><td class="svc-name">{cell}</td><td class="pr">{rng(pr[key])}</td><td class="time">{t}</td></tr>')
     price_rows = "\n            ".join(rows)
 
     # Карточки «виды ремонта»
