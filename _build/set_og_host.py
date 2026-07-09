@@ -15,13 +15,16 @@
 import os, re, glob
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CANON_HOST = "https://sparkservice.od.ua"          # что стоит в тегах (будущий домен)
-LIVE_HOST = "https://maxsushek.github.io/sparkservise"  # где файлы отдаются сейчас
+CANON_HOST = "https://sparkservice.od.ua"          # что стоит в canonical/og:url (будущий домен)
+LIVE_HOST = "https://sparkservise.vercel.app"      # где файлы og РЕАЛЬНО отдаются сейчас (Vercel, HTTP 200)
 
-# только og:image и twitter:image; canonical/og:url НЕ трогаем
+# только og:image и twitter:image; canonical/og:url НЕ трогаем.
+# Хост-агностично: нормализуем С ЛЮБОГО хоста на LIVE_HOST + СТРИПИМ project-префикс /sparkservise
+# (GH Pages отдавал репо под /sparkservise/; на Vercel/домене файлы в корне). Реальные пути og
+# начинаются с /og, /blog, /remont-... — с /sparkservise никогда, поэтому стрип безопасен.
 PATTERNS = [
-    re.compile(r'(<meta\s+property="og:image"\s+content=")' + re.escape(CANON_HOST) + r'(/[^"]*")'),
-    re.compile(r'(<meta\s+name="twitter:image"\s+content=")' + re.escape(CANON_HOST) + r'(/[^"]*")'),
+    re.compile(r'(<meta\s+property="og:image"\s+content=")https?://[^/"]+(?:/sparkservise)?(/[^"]*")'),
+    re.compile(r'(<meta\s+name="twitter:image"\s+content=")https?://[^/"]+(?:/sparkservise)?(/[^"]*")'),
 ]
 
 def process(f):
@@ -35,9 +38,8 @@ def process(f):
     return False
 
 def main():
-    if LIVE_HOST == CANON_HOST:
-        print("set_og_host: LIVE_HOST == CANON_HOST — нечего делать (домен переехал)")
-        return
+    # После переезда домена: выставить LIVE_HOST = CANON_HOST — скрипт нормализует og:image
+    # с vercel.app обратно на домен (HTTP 200 уже с домена). Раннего return больше нет — всегда чиним.
     n = tot = 0
     for f in glob.glob(os.path.join(REPO, "**", "index.html"), recursive=True):
         if "_build" in f:
