@@ -16,7 +16,7 @@ import os, re, glob
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CANON_HOST = "https://sparkservice.od.ua"          # что стоит в canonical/og:url (будущий домен)
-LIVE_HOST = "https://sparkservise.vercel.app"      # где файлы og РЕАЛЬНО отдаются сейчас (Vercel, HTTP 200)
+LIVE_HOST = "https://sparkservice.od.ua"           # домен переехал на Vercel — og:image на канонический домен
 
 # только og:image и twitter:image; canonical/og:url НЕ трогаем.
 # Хост-агностично: нормализуем С ЛЮБОГО хоста на LIVE_HOST + СТРИПИМ project-префикс /sparkservise
