@@ -115,5 +115,19 @@
     "remont-iphone",
     "remont-macbook",
     "kontakty"
+  ],
+  "relatedArticles": [
+    {
+      "slug": "iphone-ne-vklyuchaetsya",
+      "text": "iPhone не включается — что делать"
+    },
+    {
+      "slug": "iphone-upal-v-vodu-chto-delat",
+      "text": "iPhone упал в воду — что делать"
+    },
+    {
+      "slug": "iphone-greetsya",
+      "text": "Почему iPhone греется"
+    }
   ]
 }

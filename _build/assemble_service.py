@@ -68,6 +68,7 @@ def build(slug, name, c):
     faq = c.get("faq") or []; seo = c.get("seo") or []
     formOptions = c.get("formOptions") or ["%s — заявка" % name]
     related = c.get("relatedSlugs") or []
+    articles = c.get("relatedArticles") or []   # контекстные статьи блога (только релевантные)
 
     service = {"@context":"https://schema.org","@type":"Service","@id":"https://sparkservice.od.ua/%s/#service"%slug,
         "name":"%s в Одессе"%name,"description":ogd or sub,
@@ -113,6 +114,8 @@ def build(slug, name, c):
 
     seops = "\n        ".join('<p style="color:var(--muted);font-size:.95rem;line-height:1.7;margin-bottom:14px">%s</p>' % rich(p) for p in seo)
     rel = "\n          ".join('<a href="%s">%s</a>' % (resolve(s), esc(SLUG_NAMES.get(s, s))) for s in related)
+    art_links = "\n          ".join('<a href="%s">%s</a>' % (resolve("blog/" + a["slug"]), esc(a["text"])) for a in articles)
+    art_block = ('        <p style="margin-top:18px;font-weight:600;color:var(--ink)">Читайте также:</p>\n        <div class="other-models">\n          %s\n        </div>\n' % art_links) if articles else ""
     fqs = "\n        ".join('<details%s><summary>%s</summary><div class="a">%s</div></details>' % (
         (" open" if i==0 else ""), esc(f.get("q","")), rich(f.get("a",""))) for i,f in enumerate(faq))
     opts = "".join('<option>%s</option>' % esc(o) for o in formOptions)
@@ -151,7 +154,7 @@ def build(slug, name, c):
       </div>
     </div>
   </section>\n\n'''
-    p += '  <section class="sec sec-bg" id="seo-text">\n    <div class="wrap">\n      <div class="reveal" style="max-width:80ch">\n        <h2 style="font-size:1.3rem;margin-bottom:14px">%s в Одессе — сервисный центр SPARK</h2>\n        %s\n        <p style="margin-top:18px;font-weight:600;color:var(--ink)">Смотрите также:</p>\n        <div class="other-models">\n          %s\n        </div>\n      </div>\n    </div>\n  </section>\n\n' % (esc(name), seops, rel)
+    p += '  <section class="sec sec-bg" id="seo-text">\n    <div class="wrap">\n      <div class="reveal" style="max-width:80ch">\n        <h2 style="font-size:1.3rem;margin-bottom:14px">%s в Одессе — сервисный центр SPARK</h2>\n        %s\n        <p style="margin-top:18px;font-weight:600;color:var(--ink)">Смотрите также:</p>\n        <div class="other-models">\n          %s\n        </div>\n%s      </div>\n    </div>\n  </section>\n\n' % (esc(name), seops, rel, art_block)
     p += '  <section class="sec" id="faq">\n    <div class="wrap">\n      <div class="sec-head reveal">\n        <span class="sec-tag">Частые вопросы</span>\n        <h2>Вопросы об услуге</h2>\n      </div>\n      <div class="faq reveal">\n        %s\n      </div>\n    </div>\n  </section>\n\n' % fqs
     p += '  <section class="sec sec-ink" id="book">\n    <div class="wrap">\n      <div class="book">\n        <div class="copy reveal">\n          <span class="sec-tag">Заявка</span>\n          <h2>Опишите задачу — перезвоним за 15 минут</h2>\n          <p>Бесплатно подскажем, возможно ли решение, цену и срок. Или просто позвоните — мастер на связи.</p>\n        </div>\n'
     p += '        <div class="form sf reveal" id="bookFormInline">\n          <div class="sf-body">\n            <div class="mf-progress"><div class="mf-progress-row"><span>Заполнение заявки</span><b class="js-pct">0%</b></div><div class="mf-progress-track"><i class="js-bar"></i></div></div>\n'

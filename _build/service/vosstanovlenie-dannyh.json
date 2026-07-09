@@ -141,5 +141,15 @@
     "remont-iphone",
     "diagnostika",
     "razblokirovka-icloud"
+  ],
+  "relatedArticles": [
+    {
+      "slug": "iphone-ne-vklyuchaetsya",
+      "text": "iPhone не включается — что делать"
+    },
+    {
+      "slug": "iphone-upal-v-vodu-chto-delat",
+      "text": "iPhone упал в воду — что делать"
+    }
   ]
 }
