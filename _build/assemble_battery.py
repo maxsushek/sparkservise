@@ -24,23 +24,23 @@ NAV2, FOOTER2 = d2(D.NAV), d2(D.FOOTER)
 MODELS = [
     ("iPhone 17 Pro Max","iphone-17-pro-max",2000,2600),("iPhone 17 Pro","iphone-17-pro",1800,2400),
     ("iPhone 17 Air","iphone-17-air",1700,2300),("iPhone 17","iphone-17",1600,2200),
-    ("iPhone 16 Pro Max","iphone-16-pro-max",1800,2400),("iPhone 16 Pro","iphone-16-pro",1600,2200),
-    ("iPhone 16 Plus","iphone-16-plus",1500,2100),("iPhone 16","iphone-16",1400,2000),
-    ("iPhone 15 Pro Max","iphone-15-pro-max",1500,2100),("iPhone 15 Pro","iphone-15-pro",1400,1900),
-    ("iPhone 15 Plus","iphone-15-plus",1300,1800),("iPhone 15","iphone-15",1200,1700),
-    ("iPhone 14 Pro Max","iphone-14-pro-max",1300,1900),("iPhone 14 Pro","iphone-14-pro",1200,1800),
-    ("iPhone 14 Plus","iphone-14-plus",1100,1600),("iPhone 14","iphone-14",1000,1500),
-    ("iPhone 13 Pro Max","iphone-13-pro-max",1000,1500),("iPhone 13 Pro","iphone-13-pro",950,1450),
-    ("iPhone 13","iphone-13",900,1400),("iPhone 13 mini","iphone-13-mini",900,1350),
-    ("iPhone 12 Pro Max","iphone-12-pro-max",900,1350),("iPhone 12 Pro","iphone-12-pro",870,1300),
-    ("iPhone 12","iphone-12",850,1300),("iPhone 12 mini","iphone-12-mini",850,1250),
-    ("iPhone 11 Pro Max","iphone-11-pro-max",870,1250),("iPhone 11 Pro","iphone-11-pro",860,1230),
-    ("iPhone 11","iphone-11",850,1200),("iPhone XS Max","iphone-xs-max",850,1200),
-    ("iPhone XS","iphone-xs",850,1180),("iPhone XR","iphone-xr",850,1150),
-    ("iPhone X","iphone-x",850,1150),("iPhone 8 Plus","iphone-8-plus",850,1100),
-    ("iPhone 8","iphone-8",850,1050),("iPhone 7 Plus","iphone-7-plus",850,1050),
-    ("iPhone 7","iphone-7",850,1000),("iPhone SE 3 (2022)","iphone-se-2022",850,1150),
-    ("iPhone SE 2 (2020)","iphone-se-2020",850,1100),("iPhone SE (2016)","iphone-se-2016",850,1000),
+    ("iPhone 16 Pro Max","iphone-16-pro-max",4500,4500),("iPhone 16 Pro","iphone-16-pro",4200,4200),
+    ("iPhone 16 Plus","iphone-16-plus",4200,4200),("iPhone 16","iphone-16",4200,4200),
+    ("iPhone 15 Pro Max","iphone-15-pro-max",2900,2900),("iPhone 15 Pro","iphone-15-pro",2900,2900),
+    ("iPhone 15 Plus","iphone-15-plus",2900,2900),("iPhone 15","iphone-15",1200,1700),
+    ("iPhone 14 Pro Max","iphone-14-pro-max",1300,1900),("iPhone 14 Pro","iphone-14-pro",2600,2600),
+    ("iPhone 14 Plus","iphone-14-plus",2600,2600),("iPhone 14","iphone-14",2000,2000),
+    ("iPhone 13 Pro Max","iphone-13-pro-max",2000,2000),("iPhone 13 Pro","iphone-13-pro",1900,1900),
+    ("iPhone 13","iphone-13",1700,1700),("iPhone 13 mini","iphone-13-mini",1850,1850),
+    ("iPhone 12 Pro Max","iphone-12-pro-max",1900,1900),("iPhone 12 Pro","iphone-12-pro",1900,1900),
+    ("iPhone 12","iphone-12",1800,1800),("iPhone 12 mini","iphone-12-mini",1800,1800),
+    ("iPhone 11 Pro Max","iphone-11-pro-max",1500,1500),("iPhone 11 Pro","iphone-11-pro",1300,1300),
+    ("iPhone 11","iphone-11",1200,1200),("iPhone XS Max","iphone-xs-max",1200,1200),
+    ("iPhone XS","iphone-xs",1100,1100),("iPhone XR","iphone-xr",1000,1000),
+    ("iPhone X","iphone-x",950,950),("iPhone 8 Plus","iphone-8-plus",900,900),
+    ("iPhone 8","iphone-8",800,800),("iPhone 7 Plus","iphone-7-plus",800,800),
+    ("iPhone 7","iphone-7",700,700),("iPhone SE 3 (2022)","iphone-se-2022",1400,1400),
+    ("iPhone SE 2 (2020)","iphone-se-2020",900,900),("iPhone SE (2016)","iphone-se-2016",800,800),
 ]
 def grn(n): return format(n, ",d").replace(",", " ")   # 1200 -> "1 200"
 
@@ -64,7 +64,7 @@ STEPS = [
 
 # ── FAQ ──
 FAQ = [
-    ("Сколько стоит замена аккумулятора на iPhone?","Цена зависит от модели: от 850 ₴ для iPhone 7-11 и SE, 1200-2100 ₴ для iPhone 14-16, до 2600 ₴ для iPhone 17 Pro Max. Точную стоимость по вашей модели смотрите в таблице выше — диагностика бесплатная, итоговую цену называем до начала работ."),
+    ("Сколько стоит замена аккумулятора на iPhone?","Цена зависит от модели: от 700 ₴ для iPhone 7-8 и SE, 1200-1500 ₴ для iPhone 11-13, до 4500 ₴ для флагманов iPhone 16 Pro Max. Точную стоимость по вашей модели смотрите в таблице выше — диагностика бесплатная, итоговую цену называем до начала работ."),
     ("Сколько времени занимает замена батареи?","В среднем 20-30 минут — меняем при вас в мастерской. Если параллельно нужна диагностика платы или чистка разъёма, скажем об этом сразу после проверки."),
     ("Какая гарантия на новый аккумулятор?","12 месяцев — и на сам аккумулятор, и на работу мастера. Если в течение гарантии появятся вопросы к автономности, бесплатно проверим и решим."),
     ("Вы ставите оригинальный аккумулятор или копию?","Используем качественные сервисные аккумуляторы с проверенной ёмкостью. Разницу между оригиналом, сервисным и дешёвым «no-name» АКБ честно объясняем до замены — вы сами выбираете вариант под бюджет."),
@@ -112,8 +112,8 @@ def hero_svg():
       '</svg>\n      </div>')
 
 def build():
-    title = "Замена аккумулятора iPhone в Одессе — цена от 850 ₴ | SPARK"
-    desc = "Замена аккумулятора iPhone в Одессе за 20-30 минут: цена от 850 ₴, гарантия 12 месяцев, бесплатная диагностика. Все модели — от iPhone 7 до 17 Pro Max."
+    title = "Замена аккумулятора iPhone в Одессе — цена от 700 ₴ | SPARK"
+    desc = "Замена аккумулятора iPhone в Одессе за 20-30 минут: цена от 700 ₴, гарантия 12 месяцев, бесплатная диагностика. Все модели — от iPhone 7 до 17 Pro Max."
     kw = "замена аккумулятора iphone, замена аккумулятора айфон, замена батареи iphone, замена аккумулятора iphone одесса, поменять аккумулятор айфон одесса"
     h1 = "Замена аккумулятора iPhone в Одессе"
     sub = "Меняем аккумулятор на любом iPhone за 20-30 минут при вас. Бесплатная диагностика, качественные аккумуляторы, гарантия 12 месяцев и оплата по факту — без предоплаты."
@@ -154,7 +154,7 @@ def build():
     p += '        <div class="hero-cta">\n          <a class="btn btn-spark" href="#book">Записаться</a>\n          <a class="btn btn-line" href="tel:+380960755452">☎ Позвонить</a>\n        </div>\n'
     p += '        <p class="cta-note">⏱ <b>Перезвоним за 15 минут</b> · бесплатная диагностика</p>\n'
     p += '        <div class="trustbar"><span class="tb-star">★ 4.9</span> <b>Google</b><span class="sep">·</span>127 отзывов<span class="sep">·</span><b>32 000</b> ремонтов<span class="sep">·</span>9 лет</div>\n'
-    p += '        <div class="quick">\n          <span>📍 <b>ул. Академика Королёва, 23</b></span>\n          <span>🕐 <b>Пн-Сб 10:00-19:00</b></span>\n          <span>🔋 <b>от 850 ₴ · 20-30 минут</b></span>\n        </div>\n'
+    p += '        <div class="quick">\n          <span>📍 <b>ул. Академика Королёва, 23</b></span>\n          <span>🕐 <b>Пн-Сб 10:00-19:00</b></span>\n          <span>🔋 <b>от 700 ₴ · 20-30 минут</b></span>\n        </div>\n'
     p += '      </div>\n      ' + hero_svg() + '\n    </div>\n  </section>\n\n'
 
     # ── признаки ──
@@ -165,7 +165,7 @@ def build():
     # ── таблица цен по моделям (строки ссылаются на модели) ──
     rows = "\n            ".join(
         '<tr><td class="svc-name"><a href="../../remont-iphone/%s/">Замена аккумулятора %s</a></td><td class="pr">%s ₴</td><td class="time">20-30 мин</td></tr>' % (
-            slug, esc(label), grn(lo)+" – "+grn(hi)) for label,slug,lo,hi in MODELS)
+            slug, esc(label), (grn(lo) if lo==hi else grn(lo)+" – "+grn(hi))) for label,slug,lo,hi in MODELS)
     p += ('  <section class="sec sec-bg" id="prices">\n    <div class="wrap">\n      <div class="sec-head reveal">\n'
           '        <span class="sec-tag">Цены</span>\n        <h2>Стоимость замены аккумулятора по моделям</h2>\n'
           '        <p class="lead-p">Цены ориентировочные. Точную стоимость называем после бесплатной диагностики. Нажмите на модель — там все виды ремонта и цены.</p>\n      </div>\n'
