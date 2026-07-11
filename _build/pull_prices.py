@@ -13,7 +13,7 @@ Fail-safe by design:
 Локальный тест без живой БД:
   PULL_PRICES_FIXTURE=/path/to/mp_fixture.json python3 _build/pull_prices.py
 """
-import os, re, json, sys, urllib.request
+import os, re, json, sys, time, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HUB  = os.path.join(ROOT, "remont-iphone", "index.html")
@@ -31,20 +31,40 @@ def log(msg):
 
 
 def fetch_rows():
-    """Возвращает список строк model_prices (или бросает исключение)."""
+    """Возвращает список строк model_prices (или бросает исключение).
+    select=* — чтобы получить и published_prices (снимок «что на сайте»).
+    3 попытки: транзиентный сбой чтения не должен приводить к ложному fail-safe."""
     fixture = os.environ.get("PULL_PRICES_FIXTURE")
     if fixture:
         log(f"фикстура: {fixture}")
         with open(fixture, encoding="utf-8") as f:
             return json.load(f)
-    url = f"{SUPABASE_URL}/rest/v1/model_prices?select=id,sort,label,time_text,prices&order=sort.asc"
+    url = f"{SUPABASE_URL}/rest/v1/model_prices?select=*&order=sort.asc"
     req = urllib.request.Request(url, headers={
         "apikey": ANON_KEY,
         "Authorization": f"Bearer {ANON_KEY}",
         "Accept": "application/json",
     })
-    with urllib.request.urlopen(req, timeout=20) as r:
-        return json.loads(r.read().decode("utf-8"))
+    last = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=20) as r:
+                return json.loads(r.read().decode("utf-8"))
+        except Exception as e:
+            last = e
+            if attempt < 2:
+                log(f"попытка {attempt + 1} не удалась ({e}) — повтор через 3с")
+                time.sleep(3)
+    raise last
+
+
+def effective(r) -> dict:
+    """Что реально печём на сайт: ОПУБЛИКОВАННЫЙ снимок (published_prices),
+    с фолбэком на prices, если снимка ещё нет. json-строку парсим."""
+    pr = r.get("published_prices") or r.get("prices")
+    if isinstance(pr, str):
+        pr = json.loads(pr)
+    return pr or {}
 
 
 def js_prices(prices: dict) -> str:
@@ -63,9 +83,7 @@ def build_tiers_block(rows) -> str:
         rid   = r["id"]
         label = r["label"]
         tm    = r.get("time_text") or "30-60 мин"
-        pr    = r["prices"]
-        if isinstance(pr, str):            # json-текст из REST на всякий
-            pr = json.loads(pr)
+        pr    = effective(r)               # публикуем ОПУБЛИКОВАННЫЙ снимок, не черновик
         body.append(
             f"    {{id:'{rid}',label:'{label}',"
             f"prices:{js_prices(pr)},time:'{tm}'}}"
@@ -83,10 +101,14 @@ def validate(rows) -> bool:
         log(f"подозрительно мало моделей ({len(rows)}) — пропускаю ради безопасности")
         return False
     for r in rows:
-        if not r.get("id") or not r.get("label") or not r.get("prices"):
-            log(f"строка без id/label/prices ({r.get('id')}) — пропускаю")
+        if not r.get("id") or not r.get("label"):
+            log(f"строка без id/label ({r.get('id')}) — пропускаю")
             return False
-        for svc, pair in r["prices"].items() if isinstance(r["prices"], dict) else []:
+        eff = effective(r)                 # валидируем ровно то, что печём (published→prices)
+        if not eff:
+            log(f"нет цен у {r.get('id')} — пропускаю")
+            return False
+        for svc, pair in eff.items():
             if (not isinstance(pair, (list, tuple)) or len(pair) != 2
                     or not all(isinstance(x, int) and x > 0 for x in pair)):
                 log(f"кривая цена {r['id']} / {svc}: {pair} — пропускаю")

@@ -21,6 +21,31 @@ drop policy if exists mp_write_admin on public.model_prices;
 create policy mp_write_admin on public.model_prices for all
   to authenticated using (public.is_admin()) with check (public.is_admin());
 
+-- Табличные привилегии (RLS сам по себе не даёт доступ к таблице — нужен GRANT).
+-- Чтение — всем ролям API (цены публичны + нужно для сборки). Запись — только вошедшим
+-- (кого именно пускать — решает политика mp_write_admin выше через is_admin()).
+grant select on public.model_prices to anon, authenticated;
+grant insert, update, delete on public.model_prices to authenticated;
+
+-- Снимок «что реально сейчас на сайте» — для индикатора «есть неопубликованные правки»
+-- и модалки-diff. published_prices стамповит Edge Function publish-site после запуска
+-- пересборки (=prices). json (НЕ jsonb) — чтобы не пересортировать порядок услуг.
+alter table public.model_prices
+  add column if not exists published_prices json,
+  add column if not exists published_at    timestamptz;
+-- на старте база и сайт совпадают:
+update public.model_prices set published_prices = prices where published_prices is null;
+
+-- Атомарное «повысить черновик до опубликованного»: published_prices := prices.
+-- Одним стейтментом (надёжно, порядок ключей сохраняется — это копия колонки).
+-- Вызывает только Edge Function publish-site под service_role — после запуска пересборки.
+create or replace function public.promote_prices()
+returns void language sql security definer set search_path = public as $$
+  update public.model_prices set published_prices = prices, published_at = now();
+$$;
+revoke all on function public.promote_prices() from public, anon, authenticated;
+grant execute on function public.promote_prices() to service_role;
+
 -- ---- СИД: текущие цены (перезапишет одноимённые id) ----
 
 insert into public.model_prices (id, sort, label, time_text, prices) values
