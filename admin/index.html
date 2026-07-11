@@ -90,6 +90,19 @@
   th{font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
   .when{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;font-size:.82rem}
   .nm-b{font-weight:700}.phone{font-weight:700;white-space:nowrap}
+
+  /* цены */
+  #view-prices .px-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  #view-prices select{width:auto;min-width:230px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:.95rem;font-weight:700;background:#fff;color:var(--ink)}
+  #view-prices .px-note{font-size:.82rem}
+  #view-prices #pxTable{min-width:540px}
+  #view-prices td input{width:118px;padding:8px 10px;text-align:right;font-variant-numeric:tabular-nums}
+  #view-prices .px-disp{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+  #view-prices .px-single{color:#0a7d33}
+  #view-prices .px-actions{display:flex;align-items:center;gap:12px;margin-top:18px;flex-wrap:wrap}
+  #view-prices .px-msg{font-size:.86rem;font-weight:700}
+  #view-prices .px-hint{font-size:.82rem;margin-top:12px}
+  #view-prices code{background:var(--bg);padding:2px 6px;border-radius:5px;font-size:.85em}
   .act{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
   .act a{font-size:.72rem;text-decoration:none;padding:3px 8px;border-radius:6px;border:1px solid var(--line);color:var(--ink);white-space:nowrap;font-weight:600}
   .act a.call,.act a.wa{background:#DCFCE7;border-color:#bbf7d0;color:#166534}
@@ -153,6 +166,7 @@
     <nav id="nav">
       <a data-view="dash" class="active">📊 Дашборд</a>
       <a data-view="leads">📋 Лиды <span class="badge" id="navCount"></span></a>
+      <a data-view="prices">💰 Цены</a>
       <a data-view="analytics">🔌 Установка аналитики</a>
       <a data-view="guide">📖 Памятка: откуда лиды</a>
     </nav>
@@ -339,6 +353,35 @@
         <h2>🎯 Зачем это нужно</h2>
         <p>На <b>Дашборде</b> в блоках «Каналы» и «Доход по каналам» ты видишь, какой источник приносит больше <b>заявок и денег</b>. Это даёт понять, куда вкладываться (реклама, соцсети, SEO), а что не работает. Без меток весь трафик сливается в кучу — с ними видно каждый источник по отдельности.</p>
 
+      </div>
+    </div>
+
+    <!-- ЦЕНЫ -->
+    <div class="view" id="view-prices">
+      <h1>Цены на ремонт</h1>
+      <div class="card">
+        <div id="pxLoad" class="muted">Загружаю цены…</div>
+        <div id="pxErr" style="display:none"></div>
+        <div id="pxBody" style="display:none">
+          <div class="px-top">
+            <label style="margin:0">Модель</label>
+            <select id="pxModel"></select>
+            <span class="px-note muted">Правишь цены модели → «Сохранить» → «Опубликовать».</span>
+          </div>
+          <div class="tablewrap">
+            <table id="pxTable">
+              <thead><tr><th>Услуга</th><th>от, ₴</th><th>до, ₴</th><th>На сайте</th></tr></thead>
+              <tbody id="pxRows"></tbody>
+            </table>
+          </div>
+          <p class="px-hint muted">Если «от» и «до» равны — на сайте показывается <b>одна фиксированная цена</b>. Разные значения — диапазон «от … до …».</p>
+          <div class="px-actions">
+            <button class="btn" id="pxSave">💾 Сохранить модель</button>
+            <button class="btn line" id="pxPublish">🚀 Опубликовать на сайт</button>
+            <span id="pxMsg" class="px-msg"></span>
+          </div>
+          <p class="muted" style="font-size:.8rem;margin-top:10px">После публикации сайт пересобирается автоматически (~1–2 мин): цены обновляются на странице модели, в общем прайсе и в калькуляторе на главной.</p>
+        </div>
       </div>
     </div>
   </main>
@@ -541,6 +584,7 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
     document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("active", a.dataset.view === v));
     document.querySelectorAll(".view").forEach(x => x.classList.toggle("on", x.id === "view-" + v));
     if (v === "analytics") loadSettings();
+    if (v === "prices") loadPrices();
   }
   $("nav").addEventListener("click", (e) => { const a = e.target.closest("a"); if (!a) return; e.preventDefault(); showView(a.dataset.view); });
 
@@ -575,6 +619,79 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
     const { error } = await sb.from("site_settings").update(payload).eq("id", 1);
     $("s_ok").textContent = error ? ("Ошибка: " + error.message) : "Сохранено ✓ — новые визиты подхватят счётчики";
     if (!error) { try { sessionStorage.removeItem("spk_cfg"); } catch (e) {} }
+  });
+
+  // ── ЦЕНЫ ──
+  let PX = null;                       // кэш строк model_prices
+  const pxFmt = (n) => Number(n).toLocaleString("ru-RU");
+  function pxDisp(lo, hi) {
+    return lo === hi
+      ? '<span class="px-disp px-single">' + pxFmt(lo) + " ₴</span>"
+      : '<span class="px-disp">от ' + pxFmt(lo) + " до " + pxFmt(hi) + " ₴</span>";
+  }
+  async function loadPrices() {
+    if (PX) return;
+    const { data, error } = await sb.from("model_prices").select("*").order("sort", { ascending: true });
+    if (error) {
+      $("pxLoad").style.display = "none";
+      $("pxErr").style.display = "block";
+      $("pxErr").innerHTML =
+        "<b>Таблица цен ещё не создана.</b>" +
+        '<p class="muted" style="margin:8px 0">Открой Supabase → SQL Editor и выполни один раз файл <code>_build/sql/model_prices_setup.sql</code> из репозитория, затем обнови эту страницу.</p>' +
+        '<p class="muted" style="font-size:.82rem">Причина: ' + error.message + "</p>";
+      return;
+    }
+    PX = data || [];
+    $("pxModel").innerHTML = PX.map((r) => '<option value="' + r.id + '">' + r.label + "</option>").join("");
+    $("pxLoad").style.display = "none";
+    $("pxBody").style.display = "block";
+    if (PX[0]) renderPxModel(PX[0].id);
+  }
+  function pxCur() { return PX ? PX.find((r) => r.id === $("pxModel").value) : null; }
+  function renderPxModel(id) {
+    const r = PX.find((x) => x.id === id); if (!r) return;
+    $("pxRows").innerHTML = Object.entries(r.prices).map(([svc, pair]) =>
+      '<tr data-svc="' + svc.replace(/"/g, "&quot;") + '">' +
+        "<td>" + svc + "</td>" +
+        '<td><input type="number" min="0" step="10" class="px-lo" value="' + pair[0] + '"></td>' +
+        '<td><input type="number" min="0" step="10" class="px-hi" value="' + pair[1] + '"></td>' +
+        '<td class="px-disp-cell">' + pxDisp(pair[0], pair[1]) + "</td>" +
+      "</tr>"
+    ).join("");
+  }
+  $("pxRows").addEventListener("input", (e) => {
+    const tr = e.target.closest("tr"); if (!tr) return;
+    const lo = +tr.querySelector(".px-lo").value || 0, hi = +tr.querySelector(".px-hi").value || 0;
+    tr.querySelector(".px-disp-cell").innerHTML = pxDisp(lo, hi);
+  });
+  $("pxModel").addEventListener("change", () => { renderPxModel($("pxModel").value); $("pxMsg").textContent = ""; });
+  $("pxSave").addEventListener("click", async () => {
+    const r = pxCur(); if (!r) return;
+    const msg = $("pxMsg"); msg.style.color = "var(--muted)"; msg.textContent = "Сохраняю…";
+    const prices = {}; let bad = null;
+    $("pxRows").querySelectorAll("tr").forEach((tr) => {
+      const svc = tr.dataset.svc;
+      let lo = Math.round(+tr.querySelector(".px-lo").value), hi = Math.round(+tr.querySelector(".px-hi").value);
+      if (!(lo > 0) || !(hi > 0)) bad = svc;
+      if (lo > hi) { const t = lo; lo = hi; hi = t; }     // авто-своп, если перепутали местами
+      prices[svc] = [lo, hi];
+    });
+    if (bad) { msg.style.color = "var(--spark)"; msg.textContent = "Цена должна быть больше 0: " + bad; return; }
+    const { error } = await sb.from("model_prices").update({ prices: prices, updated_at: new Date().toISOString() }).eq("id", r.id);
+    if (error) { msg.style.color = "var(--spark)"; msg.textContent = "Ошибка: " + error.message; return; }
+    r.prices = prices; renderPxModel(r.id);
+    msg.style.color = "#0a7d33"; msg.textContent = "Сохранено ✓ — теперь нажми «Опубликовать»";
+  });
+  $("pxPublish").addEventListener("click", async () => {
+    const msg = $("pxMsg"); msg.style.color = "var(--muted)"; msg.textContent = "Запускаю пересборку сайта…";
+    try {
+      const { error } = await sb.functions.invoke("publish-site", { body: {} });
+      if (error) throw error;
+      msg.style.color = "#0a7d33"; msg.textContent = "Пересборка запущена ✓ Цены обновятся на сайте через 1–2 минуты.";
+    } catch (e) {
+      msg.style.color = "var(--spark)";
+      msg.textContent = "Автопубликация ещё не подключена (Фаза 2). Пока публикацию выполняет разработчик.";
+    }
   });
 
   // ── авторизация ──
