@@ -64,7 +64,8 @@ step "mark_current_nav — активное меню";     $PY _build/mark_curre
 step "prerender_hub_prices — прайс хаба в HTML"; $PY _build/prerender_hub_prices.py
 
 # 12.6) Рейтинг Google → во все страницы (из _build/google_rating.json).
-#       Значения обновляет fetch_google_rating.py при наличии API-ключа.
+#       Значения обновляет еженедельный GitHub Action (.github/workflows/google-rating.yml).
+#       Ключ в Vercel НЕ задаём — иначе платный запрос уйдёт на каждой сборке.
 if [ -n "${GOOGLE_PLACES_API_KEY:-}" ]; then
   step "fetch_google_rating — рейтинг из Places API"; $PY _build/fetch_google_rating.py || true
 fi
