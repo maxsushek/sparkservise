@@ -965,12 +965,12 @@
     },
     {
       "source": "/zamena_stekla_apple_watch",
-      "destination": "/remont-apple-watch/",
+      "destination": "/remont-apple-watch/zamena-stekla/",
       "permanent": true
     },
     {
       "source": "/zamena_stekla_apple_watch/",
-      "destination": "/remont-apple-watch/",
+      "destination": "/remont-apple-watch/zamena-stekla/",
       "permanent": true
     },
     {
