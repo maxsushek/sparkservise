@@ -112,8 +112,11 @@
   // --- телефон (идентично основной форме сайта: маска + точки + оператор) ---
   var OPS = [{ n: "Kyivstar", c: ["67", "68", "96", "97", "98", "77"] }, { n: "Vodafone", c: ["50", "66", "95", "99"] }, { n: "lifecell", c: ["63", "73", "93"] }, { n: "оператор", c: ["91", "92", "94"] }];
   function detect(code) { for (var i = 0; i < OPS.length; i++) if (OPS[i].c.indexOf(code) > -1) return OPS[i].n; return null; }
-  function rawDigits(v) { var d = v.replace(/\D/g, ""); if (d.indexOf("38") === 0) d = d.slice(2); if (d.length && d[0] !== "0") d = "0" + d; return d.slice(0, 10); }
+  function rawDigits(v) { var d = v.replace(/\D/g, ""); if (d.indexOf("38") === 0) d = d.slice(2); return d.slice(0, 10); }
   function fmt(d) { var o = ""; if (d.length > 0) o = "(" + d.slice(0, 3); if (d.length >= 3) o += ") "; if (d.length > 3) o += d.slice(3, 6); if (d.length > 6) o += "-" + d.slice(6, 8); if (d.length > 8) o += "-" + d.slice(8, 10); return o; }
+  // Маска с сохранением курсора; ведущий «0» только при вводе, не при удалении (иначе код оператора не стереть).
+  function isDel(e) { return !!(e && e.inputType && e.inputType.indexOf("delete") === 0); }
+  function applyMask(inp, deleting) { var sel = inp.selectionStart; if (sel == null) sel = inp.value.length; var before = inp.value.slice(0, sel).replace(/\D/g, "").length; var raw = inp.value.replace(/\D/g, ""); if (raw.indexOf("38") === 0) { raw = raw.slice(2); before = before > 2 ? before - 2 : 0; } if (!deleting && raw.length && raw.charAt(0) !== "0") { raw = "0" + raw; before++; } raw = raw.slice(0, 10); if (before > raw.length) before = raw.length; inp.value = fmt(raw); var val = inp.value, pos = before <= 0 ? 0 : val.length, seen = 0; if (before > 0) { for (var i = 0; i < val.length; i++) { var c = val.charCodeAt(i); if (c >= 48 && c <= 57) { seen++; if (seen === before) { pos = i + 1; break; } } } } try { inp.setSelectionRange(pos, pos); } catch (_) {} return raw; }
   function esc(s) { return String(s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
 
   function build() {
@@ -152,7 +155,7 @@
     var valid = false;
 
     function check() {
-      var d = rawDigits(phone.value); phone.value = fmt(d); var box = phone.closest(".mf-input"); valid = false;
+      var d = rawDigits(phone.value); var box = phone.closest(".mf-input"); valid = false;
       if (d.length === 0) { hint.textContent = T.hint; hint.className = "mf-hint spk-hint"; box.classList.remove("valid", "invalid"); }
       else if (d.length < 10) { hint.textContent = T.hintFull; hint.className = "mf-hint spk-hint"; box.classList.remove("valid", "invalid"); }
       else { var op = detect(d.slice(1, 3)); if (op) { valid = true; hint.innerHTML = '<span class="mf-op">✓ ' + op + "</span> " + T.hintOk; hint.className = "mf-hint spk-hint ok"; box.classList.add("valid"); box.classList.remove("invalid"); } else { hint.textContent = T.hintErr; hint.className = "mf-hint spk-hint err"; box.classList.add("invalid"); box.classList.remove("valid"); } }
@@ -160,7 +163,7 @@
       dotsWrap.classList.remove("valid", "invalid"); if (d.length === 10) dotsWrap.classList.add(valid ? "valid" : "invalid");
       submit.disabled = !valid;
     }
-    phone.addEventListener("input", check);
+    phone.addEventListener("input", function (e) { applyMask(phone, isDel(e)); check(); });
     submit.addEventListener("click", function () {
       if (submit.disabled) return;
       if (!test) ls(K_LEAD, "1");   // analytics.js поймает этот же клик по .js-submit

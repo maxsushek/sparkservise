@@ -146,8 +146,12 @@
       {n:'оператор',c:['91','92','94']}
     ];
     function detect(code){for(var i=0;i<OPS.length;i++){if(OPS[i].c.indexOf(code)>-1)return OPS[i].n;}return null;}
-    function rawDigits(v){var d=v.replace(/\D/g,'');if(d.indexOf('38')===0)d=d.slice(2);if(d.length&&d[0]!=='0')d='0'+d;return d.slice(0,10);}
+    function rawDigits(v){var d=v.replace(/\D/g,'');if(d.indexOf('38')===0)d=d.slice(2);return d.slice(0,10);}
     function fmt(d){var o='';if(d.length>0)o='('+d.slice(0,3);if(d.length>=3)o+=') ';if(d.length>3)o+=d.slice(3,6);if(d.length>6)o+='-'+d.slice(6,8);if(d.length>8)o+='-'+d.slice(8,10);return o;}
+    // Маска с сохранением курсора. Ведущий «0» подставляем ТОЛЬКО при вводе, не при удалении —
+    // иначе он регенерируется и поле не стереть/не отредактировать (баг с несъедаемым кодом оператора).
+    function isDel(e){return !!(e&&e.inputType&&e.inputType.indexOf('delete')===0);}
+    function applyMask(inp,deleting){var sel=inp.selectionStart;if(sel==null)sel=inp.value.length;var before=inp.value.slice(0,sel).replace(/\D/g,'').length;var raw=inp.value.replace(/\D/g,'');if(raw.indexOf('38')===0){raw=raw.slice(2);before=before>2?before-2:0;}if(!deleting&&raw.length&&raw.charAt(0)!=='0'){raw='0'+raw;before++;}raw=raw.slice(0,10);if(before>raw.length)before=raw.length;inp.value=fmt(raw);var val=inp.value,pos=before<=0?0:val.length,seen=0;if(before>0){for(var i=0;i<val.length;i++){var c=val.charCodeAt(i);if(c>=48&&c<=57){seen++;if(seen===before){pos=i+1;break;}}}}try{inp.setSelectionRange(pos,pos);}catch(_){}return raw;}
     function esc(s){return String(s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
 
     function wireForm(o){
@@ -155,7 +159,7 @@
       var dots=o.dotsWrap?o.dotsWrap.querySelectorAll('i'):[];
       var phoneValid=false;
       function checkPhone(){
-        var d=rawDigits(o.phone.value); o.phone.value=fmt(d);
+        var d=rawDigits(o.phone.value);
         var box=o.phone.closest('.mf-input'); phoneValid=false;
         if(d.length===0){o.hint.textContent='Введите номер мобильного оператора Украины';o.hint.className='mf-hint js-hint';box.classList.remove('valid','invalid');}
         else if(d.length<10){o.hint.textContent='Введите номер полностью';o.hint.className='mf-hint js-hint';box.classList.remove('valid','invalid');}
@@ -175,7 +179,7 @@
         o.submit.disabled=!(nameOk&&phoneValid);
       }
       o.name.addEventListener('input',update);
-      o.phone.addEventListener('input',update);
+      o.phone.addEventListener('input',function(e){applyMask(o.phone,isDel(e));update();});
       o.submit.addEventListener('click',function(){
         if(o.submit.disabled)return;
         if(o.summary)o.summary.innerHTML=
