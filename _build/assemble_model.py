@@ -207,7 +207,8 @@ def render(tid):
         if key not in pr: continue
         label = label_t.replace("__PORT__", port)
         _svc_page = {"Замена аккумулятора": "../zamena-akkumulyatora/",
-                     "Замена экрана (дисплея)": "../zamena-ekrana/"}.get(key)
+                     "Замена экрана (дисплея)": "../zamena-ekrana/",
+                     "Замена заднего стекла": "../zamena-zadnego-stekla/"}.get(key)
         cell = f'<a href="{_svc_page}">{label}</a>' if _svc_page else label
         rows.append(f'<tr><td class="svc-name">{cell}</td><td class="pr" data-svc="{key}">{rng(pr[key])}</td><td class="time">{t}</td></tr>')
     price_rows = "\n            ".join(rows)

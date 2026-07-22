@@ -83,9 +83,9 @@ SEO = [
 
 RELATED = [
     ("../../remont-iphone/","Ремонт iPhone — все услуги"),
+    ("../zamena-zadnego-stekla/","Замена заднего стекла iPhone (задняя крышка)"),
     ("../../diagnostika/","Бесплатная диагностика"),
     ("../../blog/original-ili-kopiya-displeya-iphone/","Оригинал или копия дисплея iPhone"),
-    ("../../remont-iphone/zamena-akkumulyatora/","Замена аккумулятора iPhone"),
 ]
 
 FORM_OPTS = ["Замена экрана / дисплея iPhone", "Разбит дисплей / чёрный экран", "Разбито только стекло (дисплей работает)",

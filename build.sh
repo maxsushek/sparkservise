@@ -34,6 +34,8 @@ step "assemble_battery — АКБ";               $PY _build/assemble_battery.py
 step "assemble_watch_glass — стекло Watch";  $PY _build/assemble_watch_glass.py
 # 4.2) Посадочная «Замена экрана (дисплея) iPhone» — combined (экран + стекло)
 step "assemble_screen — экран iPhone";       $PY _build/assemble_screen.py
+# 4.3) Посадочная «Замена заднего стекла iPhone»
+step "assemble_backglass — заднее стекло";   $PY _build/assemble_backglass.py
 # 5) Страницы услуг (разблокировка, диагностика, восстановление)
 step "assemble_service — услуги";            $PY _build/assemble_service.py
 # 6) Блог
