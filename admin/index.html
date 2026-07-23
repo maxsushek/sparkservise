@@ -950,10 +950,16 @@ if (!CFG.url || CFG.url.indexOf("REPLACE_") === 0) {
     if (pxPublishing) return; pxPublishing = true; $("pxModalGo").disabled = true; refreshPubBar();
     setMsg("Отправляю на публикацию…", "muted");
     let ok = false, snapshot = false, why = "";
-    try { const { data, error } = await sb.functions.invoke("quick-service", { body: {} });
-      if (!error && data && data.ok) { ok = true; snapshot = data.snapshot !== false; why = data.detail || data.warn || ""; }
-      else if (error) why = String(error.message || error);
-      else if (data && (data.error || data.detail)) why = data.error || data.detail;
+    try {
+      // 1) Промоут черновика → опубликованное делаем ЗДЕСЬ, от JWT админа
+      //    (promote_prices = SECURITY DEFINER, execute выдан роли authenticated).
+      //    Так не зависим от service-ключа в окружении edge-функции.
+      const { error: promErr } = await sb.rpc("promote_prices");
+      if (promErr) why = promErr.message; else snapshot = true;
+      // 2) Триггерим пересборку через edge-функцию (она держит секрет Vercel Deploy Hook).
+      const { data, error } = await sb.functions.invoke("quick-service", { body: {} });
+      if (!error && data && data.ok) ok = true;
+      else if (!why) why = (error && (error.message || error)) || (data && data.error) || "hook_error";
     } catch (e) { why = String(e); }
     $("pxModal").style.display = "none"; $("pxModalGo").disabled = false; pxPublishing = false;
     await refetchPublished();   // баннер/пилюля — по реальному состоянию БД
