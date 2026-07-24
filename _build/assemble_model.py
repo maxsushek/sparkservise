@@ -235,18 +235,35 @@ def render(tid):
                  "Кнопка Home / Touch ID":["40-60 мин","Гарантия 12 мес"], "Замена камеры":["40-60 мин","Гарантия 12 мес"],
                  "Замена заднего стекла":["1-2 часа","Гарантия 12 мес"], "Динамик / микрофон":["30-50 мин","Гарантия 12 мес"],
                  "После воды":["от 2 часов","Диагностика 0 ₴"], "Ремонт платы":["1-3 дня","Диагностика 0 ₴"]}
+    # aria-label по ключу (модель-агностично) для CTA-ссылки карточки → форма записи.
+    # Все карточки «виды ремонта» ведут на #book (запись): цены по услугам уже есть в
+    # прайс-таблице выше со ссылками на сервисные страницы, а грид = целевое действие «записаться».
+    card_aria = {
+        "Замена экрана (дисплея)": "Узнать цену на замену экрана iPhone",
+        "Замена аккумулятора": "Узнать цену на замену аккумулятора iPhone",
+        "Замена заднего стекла": "Узнать цену на замену заднего стекла iPhone",
+        "Не заряжается (разъём)": "Узнать цену на ремонт разъёма зарядки iPhone",
+        "После воды": "Узнать цену на ремонт iPhone после воды",
+        "Замена камеры": "Узнать цену на замену камеры iPhone",
+        "Динамик / микрофон": "Узнать цену на ремонт динамика и микрофона iPhone",
+        "Face ID": "Узнать цену на ремонт Face ID iPhone",
+        "Кнопка Home / Touch ID": "Узнать цену на ремонт кнопки Home / Touch ID iPhone",
+        "Ремонт платы": "Узнать цену на ремонт платы iPhone",
+    }
     cards = []
     for key in card_order:
         if key not in pr: continue
         title = card_title.get(key, key)
         m0, m1 = card_meta[key]
         green = ' class="green"' if "Диагностика" in m1 or "Гарантия" in m1 else ""
+        aria = card_aria.get(key, "Узнать цену на ремонт iPhone")
         cards.append(
             '<div class="rtype reveal">\n'
             '          <h3><span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">%s</svg></span> %s</h3>\n'
             '          <p>%s</p>\n'
+            '          <a class="lk" href="#book" aria-label="%s">Узнать цену<span class="ar">→</span></a>\n'
             '          <div class="meta"><span>%s</span><span class="green">%s</span></div>\n'
-            '        </div>' % (ICONS[key], title, card_desc[key], m0, m1))
+            '        </div>' % (ICONS[key], title, card_desc[key], aria, m0, m1))
     repair_cards = "\n        ".join(cards)
 
     # FAQ
